@@ -124,6 +124,35 @@ legend{font-family:var(--serif);font-weight:900;font-size:16px;margin-bottom:8px
 .rangetbl th:first-child,.rangetbl td:first-child{text-align:left}
 @media (max-width:560px){.duo{grid-template-columns:1fr}}
 .money{display:grid;gap:8px;margin-top:8px}
+/* 日历 */
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:0;border:1.5px solid transparent}
+.d-已核实{background:#2e8b57;border-color:#1f6b41}
+.d-备赛参考{background:#b9bec8;border-color:#7d8594}
+.d-待公布{background:#f0a040;border-color:#b86e10}
+.d-空{background:transparent;border-color:var(--line)}
+.mstrip{display:flex;gap:6px;overflow-x:auto;margin:14px -4px 0;padding:4px 4px 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.mbtn{flex:none;width:58px;scroll-snap-align:center;border:1.5px solid var(--line);background:var(--card);border-radius:0;padding:8px 0 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;min-height:62px}
+.mbtn b{font-family:var(--serif);font-size:20px;line-height:1}
+.mbtn b small{font-size:11px;font-family:inherit}
+.mbtn .dots{display:flex;gap:3px;min-height:10px}
+.mbtn .dots .dot{width:8px;height:8px;margin:0}
+.mbtn.now::after{content:"现在";position:absolute;top:-8px;right:-4px;font-size:10px;font-weight:700;background:var(--gold);color:#fff;padding:0 4px}
+.mbtn[aria-selected="true"]{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+:root[data-theme="dark"] .mbtn[aria-selected="true"]{background:var(--gold);color:#1a1405;border-color:var(--gold)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .mbtn[aria-selected="true"]{background:var(--gold);color:#1a1405;border-color:var(--gold)}}
+.up{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px dashed var(--line)}
+.up:first-of-type{border-top:0}
+.cd{flex:none;width:64px;text-align:center;border:1.5px solid var(--navy);padding:4px 0;line-height:1.1}
+.cd b{display:block;font-family:var(--serif);font-size:24px}
+.cd span{font-size:11px;color:var(--muted)}
+.lanehd{font-size:13px;color:var(--muted);font-weight:700;letter-spacing:2px;margin:16px 0 4px}
+.lanehd:first-of-type{margin-top:6px}
+.cnode{padding:10px 0;border-top:1px dashed var(--line);font-size:14px}
+.cnode:first-child{border-top:0}
+.cnode .nm{font-weight:700;font-size:15px}
+.cnode .acts{display:flex;gap:12px;margin-top:4px;font-size:13px}
+.linkbtn{border:0;background:none;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font-size:13px}
 .money div{background:var(--soft);border-left:3px solid var(--line);padding:8px 12px;font-size:14px}
 .list .row{display:flex;gap:12px;align-items:flex-start;padding:11px 4px;border-top:1px solid var(--line);cursor:pointer}
 .list .row:hover{background:var(--soft)}
@@ -150,6 +179,7 @@ footer{margin-top:28px;font-size:12px;color:var(--muted);border-top:1px solid va
   <nav class="tabs" role="tablist">
     <button role="tab" id="tab-q" aria-selected="true" data-tab="q">查赛事</button>
     <button role="tab" id="tab-c" aria-selected="false" data-tab="c">算奖励</button>
+    <button role="tab" id="tab-cal" aria-selected="false" data-tab="cal">日历</button>
     <button role="tab" id="tab-b" aria-selected="false" data-tab="b">全部赛事</button>
   </nav>
 
@@ -200,6 +230,18 @@ footer{margin-top:28px;font-size:12px;color:var(--muted);border-top:1px solid va
       <h2>三笔钱，别混在一起</h2>
       <div class="money" id="money"></div>
     </div>
+  </section>
+
+  <!-- 日历 -->
+  <section id="pane-cal" role="tabpanel" class="hidden">
+    <div class="card">
+      <h2>竞赛日历</h2>
+      <div class="small muted" id="calToday"></div>
+      <div class="legend small"><span><i class="dot d-已核实"></i>已核实</span><span><i class="dot d-备赛参考"></i>备赛参考</span><span><i class="dot d-待公布"></i>待公布</span></div>
+      <div class="mstrip" id="mstrip" role="tablist" aria-label="选择月份"></div>
+    </div>
+    <div class="card" id="upcoming"></div>
+    <div class="card" id="mdetail" aria-live="polite"></div>
   </section>
 
   <!-- 浏览 -->
@@ -841,7 +883,7 @@ var GRADE_TEXT = { A:'A类', B:'B类', C:'C类', D:'D类', PENDING:'待学校确
 
 /* ---------- 标签页 ---------- */
 function showTab(t){
-  ['q','c','b'].forEach(function(k){
+  ['q','c','cal','b'].forEach(function(k){
     $('pane-' + k).classList.toggle('hidden', k !== t);
     $('tab-' + k).setAttribute('aria-selected', k === t ? 'true' : 'false');
   });
@@ -1046,6 +1088,65 @@ function renderCalc(){
 }
 $('money').innerHTML = D.money.map(function(m){ return '<div><span class="tag ' + (m.kind === '学校奖励' ? 'g-A' : m.kind === '主办方奖金' ? 'g-B' : m.kind === '参赛成本' ? 'g-PENDING' : 'g-C') + '">' + esc(m.kind) + '</span><b>' + esc(m.item) + '</b><div class="muted small" style="margin-top:2px">' + esc(m.note) + '</div></div>'; }).join('');
 
+/* ---------- 日历 ---------- */
+var TODAY = new Date(); TODAY.setHours(0,0,0,0);
+var NOW_M = TODAY.getMonth() + 1, selCalM = NOW_M;
+function pad(n){ return (n < 10 ? '0' : '') + n; }
+$('calToday').textContent = '今天 ' + TODAY.getFullYear() + '-' + pad(NOW_M) + '-' + pad(TODAY.getDate()) + ' · 日期以当届官方通知和学校承办单位通知为准';
+function nickOf(n){ var c = byId[n.ids[0]]; return (c && c.aliases && c.aliases[0]) || n.name; }
+function monthNodes(m){ return D.calendar.nodes.filter(function(n){ return n.month === m; }); }
+// 只有「已核实」且写到具体某一天的节点才做倒计时
+function exactDate(n){
+  var m = n.status === '已核实' && String(n.date).match(/^(20\d{2})-(\d{2})-(\d{2})/);
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+}
+function nodeLine(n){
+  return '<div class="cnode"><span class="st st-' + n.status + '">' + n.status + '</span> <span class="nm">' + esc(nickOf(n)) + '</span>' +
+    '<div>' + esc(n.date) + ' · ' + esc(n.type) + ' <span class="muted">（' + esc(n.year) + '届）</span></div>' +
+    '<div class="acts"><button type="button" class="linkbtn" data-find="' + esc(nickOf(n)) + '">查这个赛事</button>' +
+    (n.source ? '<a href="' + esc(n.source) + '" target="_blank" rel="noopener">官方来源</a>' : '') + '</div></div>';
+}
+function renderStrip(){
+  $('mstrip').innerHTML = D.calendar.months.map(function(mp){
+    var ns = monthNodes(mp.month);
+    return '<button type="button" role="tab" class="mbtn' + (mp.month === NOW_M ? ' now' : '') + '" data-m="' + mp.month + '" aria-selected="' + (mp.month === selCalM) + '">' +
+      '<b>' + mp.month + '<small>月</small></b><span class="dots">' + (ns.length ? ns.map(function(n){ return '<i class="dot d-' + n.status + '"></i>'; }).join('') : '<i class="dot d-空"></i>') + '</span></button>';
+  }).join('');
+  $('mstrip').querySelectorAll('.mbtn').forEach(function(b){ b.onclick = function(){ selCalM = +b.dataset.m; renderStrip(); renderMonth(); }; });
+}
+function renderUpcoming(){
+  var list = D.calendar.nodes.map(function(n){ return { n: n, d: exactDate(n) }; })
+    .filter(function(x){ return x.d && x.d >= TODAY; })
+    .sort(function(a, b){ return a.d - b.d; }).slice(0, 5);
+  var h = '<h2>接下来要注意</h2><div class="small muted">只列出已核实、写到具体日期的节点。往年规律和待公布事项不做倒计时。</div>';
+  h += list.length ? list.map(function(x){
+    var days = Math.round((x.d - TODAY) / 86400000);
+    return '<div class="up"><div class="cd"><b>' + days + '</b><span>' + (days === 0 ? '就是今天' : '天后') + '</span></div><div style="min-width:0">' +
+      '<div style="font-weight:700">' + esc(nickOf(x.n)) + ' · ' + esc(x.n.type) + '</div>' +
+      '<div class="small muted">' + esc(x.n.date) + '（' + esc(x.n.year) + '届）</div>' +
+      '<div class="acts small" style="display:flex;gap:12px;margin-top:2px"><button type="button" class="linkbtn" data-find="' + esc(nickOf(x.n)) + '">查这个赛事</button>' + (x.n.source ? '<a href="' + esc(x.n.source) + '" target="_blank" rel="noopener">官方来源</a>' : '') + '</div></div></div>';
+  }).join('') : '<p class="muted">资料库里暂时没有今天之后、已核实的具体日期。请关注官网和学校通知。</p>';
+  $('upcoming').innerHTML = h;
+}
+function renderMonth(){
+  var mp = D.calendar.months.filter(function(x){ return x.month === selCalM; })[0] || { watch:'', prepare:'' };
+  var ns = monthNodes(selCalM);
+  var h = '<h2>' + selCalM + ' 月' + (selCalM === NOW_M ? ' <span class="tag" style="background:var(--gold);color:#fff">现在</span>' : '') + '</h2>' +
+    '<div class="lanehd">🔎 要查报名通知</div><div>' + esc(mp.watch) + '</div>' +
+    '<div class="lanehd">🛠 现在开始准备</div><div>' + esc(mp.prepare) + '</div>' +
+    '<div class="lanehd">📅 时间节点</div>' + (ns.length ? '<div>' + ns.map(nodeLine).join('') + '</div>' : '<p class="muted">本月暂无已核实节点；以官网和学校通知为准。</p>') +
+    (mp.status ? '<div class="small muted" style="margin-top:10px">信息状态：' + esc(mp.status) + '</div>' : '');
+  $('mdetail').innerHTML = h;
+}
+// 「查这个赛事」：切到查询页并搜索
+$('pane-cal').addEventListener('click', function(e){
+  var f = e.target.closest('[data-find]'); if (!f) return;
+  showTab('q'); $('q').value = f.dataset.find; runSearch(f.dataset.find); window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+renderStrip(); renderUpcoming(); renderMonth();
+function scrollStripToSel(){ var b = $('mstrip').querySelector('[aria-selected="true"]'); if (b) $('mstrip').scrollLeft = b.offsetLeft - $('mstrip').clientWidth / 2 + b.clientWidth / 2; }
+$('tab-cal').addEventListener('click', function(){ setTimeout(scrollStripToSel, 0); });
+
 /* ---------- 浏览 ---------- */
 var BF = { grade: 'ALL', group: 'ALL', text: '' };
 var groups = []; D.competitions.forEach(function(c){ if (groups.indexOf(c.group) < 0) groups.push(c.group); });
@@ -1074,7 +1175,7 @@ function renderList(){
 renderList();
 renderCalc();
 
-/* ---------- 链接参数：#q=蓝桥杯 / #calc=A,sci,2,3[&view=both] / #tab=b ---------- */
+/* ---------- 链接参数：#q=蓝桥杯 / #calc=A,sci,2,3[&view=both] / #tab=cal[&m=9] / #tab=b ---------- */
 function applyHash(){
   var p = new URLSearchParams(location.hash.slice(1));
   if (p.get('demo') && !document.querySelector('.demo-banner')) document.querySelector('header.top').insertAdjacentHTML('beforeend', '<div class="demo-banner">课堂演示模式：可直接在这里输入和点击</div>');
@@ -1086,7 +1187,8 @@ function applyHash(){
     showTab('c'); renderCalc();
     if (F.grade && F.type && F.rank && F.size) setTimeout(function(){ $('cout').scrollIntoView({ block: 'start' }); }, 50);
   }
-  if (p.get('tab')) showTab(p.get('tab'));
+  if (p.get('tab')) { showTab(p.get('tab')); if (p.get('tab') === 'cal') setTimeout(scrollStripToSel, 0); }
+  if (p.get('m')) { selCalM = Math.max(1, Math.min(12, +p.get('m') || NOW_M)); renderStrip(); renderMonth(); setTimeout(scrollStripToSel, 0); }
 }
 applyHash();
 window.addEventListener('hashchange', applyHash);

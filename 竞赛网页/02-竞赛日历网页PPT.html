@@ -224,7 +224,7 @@ S.push('<div class="kicker">第二件事</div><h2>获奖了，学校怎么奖励
 /* 4 全年总览：聚光灯时间轴 */
 function monthNodes(m){ return D.calendar.nodes.filter(function(n){ return n.month === m; }); }
 function nodeHtml(n){
-  return '<div class="node"><span class="st st-' + n.status + '">' + n.status + '</span><b>' + esc(nick(n.ids, n.name)) + '</b> ' + esc(n.date) + ' · ' + esc(n.type.replace(/（.*?）/g, '')) + ' <span class="muted">' + esc(n.year) + '届</span>' +
+  return '<div class="node"><span class="st st-' + n.status + '">' + n.status + '</span><b>' + esc(nick(n.ids, n.name)) + '</b> ' + esc(n.date) + ' · ' + esc(n.type) + ' <span class="muted">' + esc(n.year) + '届</span>' +
     (n.source ? ' <a class="src" href="' + esc(n.source) + '" target="_blank" rel="noopener">[来源 ' + esc(n.source.replace(/^https?:\/\//, '').split('/')[0]) + ']</a>' : '') + '</div>';
 }
 var OV = S.length;
