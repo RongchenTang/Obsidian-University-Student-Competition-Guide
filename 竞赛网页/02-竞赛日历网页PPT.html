@@ -65,13 +65,38 @@ th{color:var(--ink);font-size:22px;font-weight:800;border-bottom:2px solid var(-
 .branch{border-style:dashed;display:flex;flex-direction:column;gap:10px}
 .fork{display:flex;flex-direction:column;gap:10px;margin-top:6px;font-size:20px}
 .fork .g{font-size:20px;min-width:120px;text-align:center}
-/* 12个月总览 */
-.months{display:grid;grid-template-columns:repeat(6,1fr);gap:18px}
-.m{border:2px solid var(--line);border-radius:6px;background:var(--soft);padding:12px 14px;min-height:250px;font-size:19px;line-height:1.4;box-shadow:4px 4px 0 var(--shadow)}
-.m.now{background:var(--green-soft);border-color:var(--green);box-shadow:4px 4px 0 var(--green);transform:rotate(-1deg)}
-.m .mh{font-size:32px;font-weight:900;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
-.m .mh small{font-size:15px;color:#fff;background:var(--coral);border-radius:6px;padding:1px 8px;font-weight:800}
-.m .it{margin:4px 0}
+/* 12个月总览：聚光灯时间轴 */
+.tl{position:relative;display:grid;grid-template-columns:repeat(12,1fr);gap:8px;margin-top:-6px}
+.tl::before{content:"";position:absolute;left:2%;right:2%;top:62px;height:3px;background:var(--line);opacity:.25;border-radius:2px}
+.tm{position:relative;border:2px solid transparent;background:transparent;color:var(--ink);font-family:inherit;border-radius:8px;padding:6px 0 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:transform .18s ease,background .18s ease}
+.tm:hover{transform:translateY(-3px)}
+.tmn{font-size:36px;font-weight:900;line-height:1;color:var(--muted);transition:color .18s}
+.tmn small{font-size:18px;margin-left:1px}
+.tm.now .tmn{color:var(--ink)}
+.tm.sel{background:var(--soft);border-color:var(--line);box-shadow:4px 4px 0 var(--shadow);transform:translateY(-4px)}
+.tm.sel .tmn{color:var(--ink);background:linear-gradient(transparent 60%,var(--hl) 60%,var(--hl) 92%,transparent 92%)}
+.tm.now.sel{border-color:var(--green);box-shadow:4px 4px 0 var(--green);background:var(--green-soft)}
+.dots{display:flex;gap:5px;min-height:14px;align-items:center;position:relative;z-index:1}
+.dots i,.tlhelp i{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid var(--line);background:var(--paper)}
+.tlhelp i{width:12px;height:12px;vertical-align:-1px;margin-right:4px}
+.d-已核实{background:#3f9d63 !important;border-color:#2b6e44 !important}
+.d-备赛参考{background:#b8bdb2 !important;border-color:#7c8476 !important}
+.d-待公布{background:#ffa64d !important;border-color:#c66f12 !important}
+.d-空{opacity:.35}
+.nowtag{position:absolute;top:-14px;right:-4px;font-size:14px;font-weight:800;color:#fff;background:var(--coral);border-radius:6px;padding:0 7px;transform:rotate(4deg)}
+.nowtag.big{position:static;font-size:20px;padding:2px 10px;transform:rotate(-3deg)}
+.mpanel{margin-top:18px;background:var(--soft);border:2px solid var(--line);border-radius:8px;box-shadow:6px 6px 0 var(--shadow);padding:22px 28px;overflow:hidden}
+.mp-in{display:grid;grid-template-columns:200px 1fr;gap:28px;height:100%;animation:mpin .28s ease}
+@keyframes mpin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.mp-head{display:flex;flex-direction:column;gap:12px;border-right:2px dashed var(--rule);padding-right:20px}
+.mp-m{font-size:96px;font-weight:900;line-height:1}
+.mp-m small{font-size:36px}
+.mp-sum{font-size:20px;color:var(--muted);font-weight:700}
+.mp-lanes{display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:28px;font-size:25px;line-height:1.55}
+.mp-lanes .lane > b{font-size:19px;margin-bottom:4px}
+.mp-lanes .node{margin:6px 0 10px}
+.tlhelp{margin-top:12px}
+@media (prefers-reduced-motion: reduce){.mp-in{animation:none}.tm,.tm:hover{transition:none;transform:none}}
 /* 季度页 */
 .q3{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
 .qm{background:var(--soft);border:2px solid var(--line);border-radius:6px;box-shadow:6px 6px 0 var(--shadow);padding:16px 20px;font-size:20px;line-height:1.42;display:flex;flex-direction:column;gap:10px}
@@ -196,17 +221,35 @@ S.push('<div class="kicker">第二件事</div><h2>获奖了，学校怎么奖励
   '<div class="sm" style="margin-top:10px">这是<b>预计团队奖励总额</b>，不是每人各拿这么多；学校没规定队内怎么分。</div>' +
   '<div class="sm" style="margin-top:16px;border-top:2px dashed var(--rule);padding-top:14px">指导教师（团队）另按教师标准：<b style="font-size:30px">' + C.fmt(C.calcReward(D,{grade:'A',type:'sci',rank:2,size:3}).teacher.amount) + ' 元</b><br><span class="xs muted">不乘学生团队系数；与学生奖励分开发放</span></div></div></div>');
 
-/* 4 全年总览 */
+/* 4 全年总览：聚光灯时间轴 */
 function monthNodes(m){ return D.calendar.nodes.filter(function(n){ return n.month === m; }); }
+function nodeHtml(n){
+  return '<div class="node"><span class="st st-' + n.status + '">' + n.status + '</span><b>' + esc(nick(n.ids, n.name)) + '</b> ' + esc(n.date) + ' · ' + esc(n.type.replace(/（.*?）/g, '')) + ' <span class="muted">' + esc(n.year) + '届</span>' +
+    (n.source ? ' <a class="src" href="' + esc(n.source) + '" target="_blank" rel="noopener">[来源 ' + esc(n.source.replace(/^https?:\/\//, '').split('/')[0]) + ']</a>' : '') + '</div>';
+}
+var OV = S.length;
 S.push('<div class="kicker">第三件事 · 竞赛日历</div><h2>12 个月总览</h2>' +
-  '<div class="months grow">' + D.calendar.months.map(function(mp){
+  '<div class="tl" id="tl">' + D.calendar.months.map(function(mp){
     var ns = monthNodes(mp.month);
-    return '<div class="m' + (mp.month === NOW_M ? ' now' : '') + '"><div class="mh">' + mp.month + '月' + (mp.month === NOW_M ? '<small>现在</small>' : '') + '</div>' +
-      ns.slice(0, 3).map(function(n){ return '<div class="it"><span class="st st-' + n.status + '" style="font-size:14px">' + n.status + '</span>' + esc(nick(n.ids, n.name)) + ' · ' + esc(n.type.replace(/（.*?）/g, '')) + '</div>'; }).join('') +
-      (ns.length > 3 ? '<div class="it muted">另有 ' + (ns.length - 3) + ' 项，见季度页</div>' : '') +
-      (ns.length ? '' : '<div class="it muted">' + esc(mp.watch.split(/[；;]/)[0]) + '</div><div class="it"><span class="st st-备赛参考" style="font-size:14px">备赛参考</span></div>') +
-      '</div>';
-  }).join('') + '</div>');
+    return '<button type="button" class="tm' + (mp.month === NOW_M ? ' now' : '') + '" data-month="' + mp.month + '" aria-label="' + mp.month + '月">' +
+      '<span class="tmn">' + mp.month + '<small>月</small></span>' +
+      '<span class="dots">' + (ns.length ? ns.map(function(n){ return '<i class="d-' + n.status + '"></i>'; }).join('') : '<i class="d-空"></i>') + '</span>' +
+      (mp.month === NOW_M ? '<span class="nowtag">现在</span>' : '') + '</button>';
+  }).join('') + '</div>' +
+  '<div class="mpanel grow" id="mpanel"></div>' +
+  '<div class="xs muted tlhelp"><i class="d-已核实"></i>已核实　<i class="d-备赛参考"></i>备赛参考　<i class="d-待公布"></i>待公布　·　鼠标悬停或点击月份切换，↑ / ↓ 逐月查看</div>');
+function monthPanel(m){
+  var mp = D.calendar.months.filter(function(x){ return x.month === m; })[0] || { watch:'', prepare:'' };
+  var ns = monthNodes(m);
+  return '<div class="mp-in"><div class="mp-head"><div class="mp-m">' + m + '<small>月</small></div>' +
+    (m === NOW_M ? '<span class="nowtag big">现在</span>' : '') +
+    '<div class="mp-sum">' + (ns.length ? ns.length + ' 个时间节点' : '暂无已核实节点') + '</div></div>' +
+    '<div class="mp-lanes">' +
+    '<div class="lane"><b>🔎 要查报名通知</b>' + esc(mp.watch) + '</div>' +
+    '<div class="lane"><b>🛠 现在开始准备</b>' + esc(mp.prepare) + '</div>' +
+    '<div class="lane"><b>📅 时间节点</b>' + (ns.length ? ns.map(nodeHtml).join('') : '<span class="muted">本月暂无已核实节点；以官网和学校通知为准</span>') + '</div>' +
+    '</div></div>';
+}
 
 /* 5-8 季度详情 */
 [[1,2,3],[4,5,6],[7,8,9],[10,11,12]].forEach(function(q, qi){
@@ -217,10 +260,7 @@ S.push('<div class="kicker">第三件事 · 竞赛日历</div><h2>12 个月总�
       return '<div class="qm' + (m === NOW_M ? ' now' : '') + '"><div class="mh">' + m + '月' + (m === NOW_M ? ' <span class="st st-已核实" style="font-size:18px">现在</span>' : '') + '</div>' +
         '<div class="lane"><b>🔎 要查报名通知</b>' + esc(mp.watch) + '</div>' +
         '<div class="lane"><b>🛠 现在开始准备</b>' + esc(mp.prepare) + '</div>' +
-        '<div class="lane"><b>📅 时间节点</b>' + (ns.length ? ns.map(function(n){
-          return '<div class="node"><span class="st st-' + n.status + '">' + n.status + '</span><b>' + esc(nick(n.ids, n.name)) + '</b> ' + esc(n.date) + ' · ' + esc(n.type.replace(/（.*?）/g, '')) + ' <span class="muted">' + esc(n.year) + '届</span>' +
-            (n.source ? ' <a class="src" href="' + esc(n.source) + '" target="_blank" rel="noopener">[来源 ' + esc(n.source.replace(/^https?:\/\//, '').split('/')[0]) + ']</a>' : '') + '</div>';
-        }).join('') : '<span class="muted">本月暂无已核实节点；以官网和学校通知为准</span>') + '</div></div>';
+        '<div class="lane"><b>📅 时间节点</b>' + (ns.length ? ns.map(nodeHtml).join('') : '<span class="muted">本月暂无已核实节点；以官网和学校通知为准</span>') + '</div></div>';
     }).join('') + '</div>');
 });
 
@@ -308,7 +348,20 @@ function setDemo(params){
   f.src = 'about:blank';
   setTimeout(function(){ f.src = QUERY + '#demo=1&' + params; }, 30);
 }
+/* 聚光灯时间轴 */
+var selM = NOW_M;
+function selMonth(m){
+  m = Math.max(1, Math.min(12, m));
+  var panel = document.getElementById('mpanel');
+  if (m === selM && panel.innerHTML) return;
+  selM = m;
+  document.querySelectorAll('#tl .tm').forEach(function(b){ b.classList.toggle('sel', +b.dataset.month === m); b.setAttribute('aria-pressed', +b.dataset.month === m); });
+  panel.innerHTML = monthPanel(m);
+}
+selM = 0; selMonth(NOW_M);
+stage.addEventListener('mouseover', function(e){ var t = e.target.closest('[data-month]'); if (t) selMonth(+t.dataset.month); });
 stage.addEventListener('click', function(e){
+  var mo = e.target.closest('[data-month]'); if (mo) { selMonth(+mo.dataset.month); return; }
   var t = e.target.closest('[data-demo]'); if (t) { setDemo(t.getAttribute('data-demo')); return; }
   var g = e.target.closest('[data-go]'); if (g) { go(DEMO); return; }
   var m = e.target.closest('.mcard'); if (m) m.classList.toggle('open');
@@ -316,6 +369,7 @@ stage.addEventListener('click', function(e){
 function toggleFull(){ if (!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
 function toggleTheme(){ var r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; }
 function onKey(k){
+  if (cur === OV && (k === 'ArrowDown' || k === 'ArrowUp')) { selMonth(selM + (k === 'ArrowDown' ? 1 : -1)); return true; }
   if (['ArrowRight','ArrowDown','PageDown',' ','Enter','n'].indexOf(k) >= 0) go(cur + 1);
   else if (['ArrowLeft','ArrowUp','PageUp','Backspace','p'].indexOf(k) >= 0) go(cur - 1);
   else if (k === 'Home') go(0);
@@ -340,7 +394,7 @@ document.getElementById('bFull').onclick = toggleFull;
 document.getElementById('bTheme').onclick = toggleTheme;
 var start = parseInt(location.hash.slice(1), 10);
 go(isNaN(start) ? 0 : start - 1);
-window.__slides = { count: N, demo: DEMO, go: go, cur: function(){ return cur; } };
+window.__slides = { count: N, demo: DEMO, overview: OV, go: go, cur: function(){ return cur; }, month: function(){ return selM; } };
 })();
 </script>
 </body>
