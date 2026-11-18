@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>竞赛日历网页PPT</title>
+<style>
+/* 方案三 · 纸质手账：清新亲和 */
+:root{
+  --bg:#e9e4d8; --paper:#fffdf6; --ink:#26302a; --muted:#646d62; --line:#26302a; --rule:#efe8d6; --soft:#ffffff;
+  --a:#2f5fbf; --a-soft:#dce7ff; --b:#2e7a4f; --b-soft:#d3f0dc; --warn:#8a4b00; --warn-soft:#ffe2b8;
+  --cd:#55605a; --cd-soft:#ebe7dc; --ok:#26302a; --hl:#ffe066; --green:#3f7d58; --green-soft:#eefaf1; --coral:#ff7f5c;
+  --shadow:#26302a;
+}
+:root[data-theme="dark"]{
+  --bg:#0f1311; --paper:#1b221e; --ink:#f1ecdc; --muted:#b2b8a9; --line:#f1ecdc; --rule:#232c27; --soft:#212a25;
+  --a:#9dbaff; --a-soft:#22304f; --b:#7fd9a2; --b-soft:#173826; --warn:#ffc271; --warn-soft:#3b2a10;
+  --cd:#c3c8bb; --cd-soft:#2a322d; --ok:#f1ecdc; --hl:#7a6a12; --green:#7fd9a2; --green-soft:#1d3127; --coral:#ff8f6e;
+  --shadow:#000000;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden;
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif}
+a{color:var(--a)}
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#stage{width:1600px;height:900px;position:relative;transform-origin:center center;flex:none}
+.slide{position:absolute;inset:0;background-color:var(--paper);background-image:linear-gradient(var(--rule) 1.5px,transparent 1.5px);background-size:100% 46px;background-position:0 30px;
+  border-radius:8px;padding:56px 72px 64px;display:none;flex-direction:column;box-shadow:0 14px 40px rgba(0,0,0,.18);font-size:28px;line-height:1.5}
+.slide::before{content:"";position:absolute;left:44px;top:0;bottom:0;width:2px;background:#f2b8a8;opacity:.7}
+.slide.on{display:flex}
+.kicker{font-size:22px;font-weight:800;color:var(--green);letter-spacing:2px}
+h1{font-size:76px;line-height:1.2;margin:16px 0 0}
+h1,h2{width:fit-content}
+h2{font-size:52px;line-height:1.25;margin:6px 0 26px;background:linear-gradient(transparent 58%,var(--hl) 58%,var(--hl) 92%,transparent 92%)}
+h3{font-size:30px;margin:0 0 10px}
+.muted{color:var(--muted)}
+.sm{font-size:22px}
+.xs{font-size:19px}
+.grow{flex:1;min-height:0}
+.row{display:flex;gap:26px}
+.col{flex:1;min-width:0}
+.box{background:var(--soft);border:2px solid var(--line);border-radius:6px;padding:20px 24px;box-shadow:6px 6px 0 var(--shadow)}
+.g{display:inline-block;font-weight:900;border-radius:6px;padding:2px 14px;margin-right:10px;transform:rotate(-2deg)}
+.g-A{background:var(--a-soft);color:var(--a)} .g-B{background:var(--b-soft);color:var(--b)}
+.g-C,.g-D{background:var(--cd-soft);color:var(--cd)} .g-W{background:var(--warn-soft);color:var(--warn)}
+.st{display:inline-block;font-size:17px;font-weight:800;padding:0 8px;margin-right:8px;vertical-align:2px;white-space:nowrap}
+.st-已核实{background:var(--b-soft);color:var(--b)} .st-备赛参考{background:var(--cd-soft);color:var(--cd)} .st-待公布{background:var(--warn-soft);color:var(--warn)}
+table{border-collapse:collapse;width:100%;background:var(--soft);border:2px solid var(--line);box-shadow:6px 6px 0 var(--shadow)}
+th,td{border-bottom:1.5px dashed var(--rule);padding:10px 14px;text-align:right;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+td{font-size:24px}
+th,td{padding:10px 10px}
+td:first-child,th:first-child{white-space:nowrap}
+th{color:var(--ink);font-size:22px;font-weight:800;border-bottom:2px solid var(--line)}
+.big{font-size:72px;font-weight:900;color:var(--ok);width:fit-content;background:linear-gradient(transparent 60%,var(--hl) 60%,var(--hl) 92%,transparent 92%)}
+.foot{position:absolute;left:72px;right:72px;bottom:20px;display:flex;justify-content:space-between;font-size:17px;color:var(--muted)}
+/* 12个月总览 */
+.months{display:grid;grid-template-columns:repeat(6,1fr);gap:18px}
+.m{border:2px solid var(--line);border-radius:6px;background:var(--soft);padding:12px 14px;min-height:250px;font-size:19px;line-height:1.4;box-shadow:4px 4px 0 var(--shadow)}
+.m.now{background:var(--green-soft);border-color:var(--green);box-shadow:4px 4px 0 var(--green);transform:rotate(-1deg)}
+.m .mh{font-size:32px;font-weight:900;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.m .mh small{font-size:15px;color:#fff;background:var(--coral);border-radius:6px;padding:1px 8px;font-weight:800}
+.m .it{margin:4px 0}
+/* 季度页 */
+.q3{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+.qm{background:var(--soft);border:2px solid var(--line);border-radius:6px;box-shadow:6px 6px 0 var(--shadow);padding:16px 20px;font-size:20px;line-height:1.42;display:flex;flex-direction:column;gap:10px}
+.qm.now{background:var(--green-soft);border-color:var(--green);box-shadow:6px 6px 0 var(--green);transform:rotate(-.5deg)}
+.qm .mh{font-size:38px;font-weight:900}
+.qm .mh .st{background:var(--coral);color:#fff;border-radius:6px}
+.lane > b{display:block;font-size:17px;color:var(--muted);letter-spacing:1px;font-weight:800}
+.node{margin:4px 0}
+.node .src{font-size:15px;white-space:nowrap}
+/* 路线 */
+.route{background:var(--soft);border:2px solid var(--line);border-radius:6px;box-shadow:6px 6px 0 var(--shadow);padding:18px 22px;display:flex;flex-direction:column;gap:10px;font-size:21px;line-height:1.4;height:100%}
+.route h3{font-size:34px;width:fit-content;background:linear-gradient(transparent 60%,var(--hl) 60%,var(--hl) 92%,transparent 92%)}
+.route .lab{font-size:17px;font-weight:800;color:var(--muted);letter-spacing:1px}
+.route .act{background:var(--hl);border-radius:4px;padding:10px 14px;font-weight:700;margin-top:auto;transform:rotate(-.4deg)}
+.comp{display:block;margin:3px 0;font-size:20px}
+.comp .id{font-family:ui-monospace,Consolas,monospace;font-size:18px;color:var(--muted)}
+/* 互动 */
+.task{display:flex;gap:18px;align-items:flex-start;padding:18px 0;border-top:2px dashed var(--rule)}
+.task:first-of-type{border-top:0}
+.num{flex:none;width:58px;height:58px;border-radius:50%;background:var(--green);color:#fff;font-weight:900;font-size:30px;display:flex;align-items:center;justify-content:center;border:2px solid var(--line);box-shadow:3px 3px 0 var(--shadow)}
+.btn{border:2px solid var(--line);background:var(--ink);color:var(--paper);border-radius:6px;padding:12px 22px;font:inherit;font-size:22px;font-weight:800;cursor:pointer;box-shadow:4px 4px 0 var(--green)}
+.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--green)}
+.btn.ghost{background:var(--soft);color:var(--ink);box-shadow:4px 4px 0 var(--shadow)}
+.money{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.mcard{border:2px dashed var(--line);border-radius:6px;padding:16px 18px;font-size:22px;cursor:pointer;text-align:left;background:var(--soft);color:var(--ink);font-family:inherit;line-height:1.4}
+.mcard:hover{transform:rotate(-.6deg)}
+.mcard .ans{display:none;margin-top:8px;font-size:18px;color:var(--muted)}
+.mcard.open{border-style:solid;box-shadow:5px 5px 0 var(--shadow)}
+.mcard.open .ans{display:block}
+.demo-btns .btn{font-size:19px;padding:10px 16px}
+iframe{border:2px solid var(--line);border-radius:6px;width:100%;height:100%;background:#fff;box-shadow:6px 6px 0 var(--shadow)}
+/* 控制条 */
+#bar{position:fixed;left:0;right:0;bottom:0;height:6px;background:transparent;z-index:9}
+#bar i{display:block;height:100%;background:var(--green);width:0;transition:width .2s}
+#ctrl{position:fixed;right:14px;top:12px;z-index:10;display:flex;gap:8px;opacity:.35;transition:opacity .2s}
+#ctrl:hover,#ctrl:focus-within{opacity:1}
+#ctrl button{border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:6px;padding:6px 10px;font:inherit;font-size:14px;cursor:pointer}
+#help{position:fixed;left:14px;bottom:14px;font-size:13px;color:var(--muted);z-index:10;opacity:.6}
+@media print{#ctrl,#help,#bar{display:none}}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage"></div></div>
+<div id="bar"><i></i></div>
+<div id="ctrl">
+  <button type="button" id="bPrev" aria-label="上一页">◀</button>
+  <span id="pg" style="align-self:center;font-size:14px;min-width:52px;text-align:center"></span>
+  <button type="button" id="bNext" aria-label="下一页">▶</button>
+  <button type="button" id="bDemo">查询器演示 (Q)</button>
+  <button type="button" id="bFull">全屏 (F)</button>
+  <button type="button" id="bTheme">深/浅 (T)</button>
+</div>
+<div id="help">← → / 空格 / PageUp PageDown 翻页 · Home/End 首尾页 · Q 演示页 · F 全屏</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/core.js"></script>
+<script>
+(function(){
+'use strict';
+var D = window.COMP_DATA, C = window.CompCore;
+var stage = document.getElementById('stage');
+if (!D || !C) { stage.innerHTML = '<div class="slide on"><h2>数据没有加载</h2><p>请确认本页面和 assets 文件夹在同一目录。</p></div>'; return; }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+var byId = {}; D.competitions.forEach(function(c){ byId[c.id] = c; });
+var QUERY = '01-竞赛查询与奖金计算器.html';
+var now = new Date(), NOW_M = now.getMonth() + 1;
+function short(name){ return name.replace(/^(20\d{2}年?（?第?[0-9一二三四五六七八九十]+届?）?|第[0-9一二三四五六七八九十]+届)/, ''); }
+// 投影用短名：去掉届次、年份、括号和「全国大学生」等前缀；完整名称在查询器中查看
+function compact(name){
+  return name.replace(/20\d{2}年?|第[0-9一二三四五六七八九十]+届|首届/g, '').replace(/[（(][^）)]*[）)]/g, '')
+    .replace(/^(“[^”]*”)?(全国普通高校|全国高等院校|全国高校|中国高校|全国大学生|中国大学生|全球校园|全国)/, '$1')
+    .replace('全国软件和信息技术专业人才大赛', '').replace(/^重庆市大学生/, '重庆市').trim();
+}
+function nick(ids, fallback){ var c = byId[ids[0]]; return (c && c.aliases && c.aliases[0]) || compact(fallback); }
+function compLine(id){
+  var c = byId[id]; if (!c) return '';
+  return '<span class="comp"><span class="g g-' + c.grade + '" style="font-size:16px;padding:0 7px">' + c.grade + '</span>' + esc(compact(c.name)) + ' <span class="id">' + id + '</span></span>';
+}
+function footer(){ return '<div class="foot"><span>依据 ' + esc(D.meta.policy) + ' · 资料库 v' + esc(D.meta.version) + '（' + esc(D.meta.updated) + '）</span><span class="pgno"></span></div>'; }
+
+var S = [];
+
+/* 1 封面 */
+S.push('<div class="kicker">重庆移通学院 · 学生学科竞赛导航</div>' +
+  '<h1>一年里，哪些比赛值得参加？<br>什么时候开始准备？</h1>' +
+  '<div class="grow"></div>' +
+  '<div class="row sm"><div class="col box"><b>今天讲 4 件事</b><br>① 学校怎么认定A/B/C/D类　② 奖金怎么算<br>③ 12个月竞赛日历　④ 按方向选赛 + 现场查询</div>' +
+  '<div class="col box"><b>标签怎么看</b><br><span class="st st-已核实">已核实</span>有年份、事项类型和官方来源<br><span class="st st-备赛参考">备赛参考</span>往年规律，不是报名承诺<br><span class="st st-待公布">待公布</span>当届日期还没发布</div></div>');
+
+/* 2 ABCD */
+var EX = {
+  A: '全国大学生数学建模竞赛（全国赛）——附件1第5项',
+  B: '中国大学生计算机设计大赛<b>重庆市级赛</b>——附件2第42项，是A类赛事对应的市级赛',
+  C: '例如某个不在A/B名单里的省级比赛：只有拿到<b>学校批准记录</b>后才算C类，否则是「待学校确认」',
+  D: '例如某学院发起、多个部门参与的校级比赛：同样要<b>学校批准</b>才算D类'
+};
+S.push('<div class="kicker">第一件事</div><h2>学校怎么分 A / B / C / D 类？</h2>' +
+  '<div class="grow" style="display:grid;grid-template-columns:1fr 1fr;gap:18px">' +
+  D.gradeRules.map(function(g){
+    return '<div class="box" style="font-size:24px"><div style="font-size:30px;font-weight:800;margin-bottom:6px"><span class="g g-' + g.grade + '">' + g.grade + '类</span>' + esc(g.plain) + '</div>' +
+      '<div class="xs muted" style="margin-bottom:8px">名单：' + esc(g.list) + '</div>' +
+      '<div>举例：' + (EX[g.grade] || '') + '</div></div>';
+  }).join('') + '</div>' +
+  '<div class="sm muted" style="margin-top:14px">注意：A/B/C/D 是<b>竞赛等级</b>；「理工类（硬件类）/理工类（其他类）/人文社科类」是<b>计奖类型</b>，两件事要分开确认。</div>');
+
+/* 3 奖金 */
+var R = D.reward, TN = C.TYPE_NAMES;
+S.push('<div class="kicker">第二件事</div><h2>获奖了，学校怎么奖励？</h2>' +
+  '<div class="row grow"><div class="col" style="flex:1.35">' +
+  '<table><thead><tr><th>学生奖励（元）</th><th>A一等</th><th>A二等</th><th>A三等</th><th>B一等</th><th>B二等</th><th>B三等</th></tr></thead><tbody>' +
+  ['hw','sci','hum'].map(function(k){ var t = R.student[k]; return '<tr><td>' + TN[k] + '</td><td>' + t.A[1] + '</td><td>' + t.A[2] + '</td><td>' + t.A[3] + '</td><td>' + t.B[1] + '</td><td>' + t.B[2] + '</td><td>' + t.B[3] + '</td></tr>'; }).join('') +
+  '</tbody></table>' +
+  '<div class="sm" style="margin-top:18px">团队系数：个人 ' + R.team[1] + ' · 2人 ' + R.team[2] + ' · 3人 ' + R.team[3] + ' · 4人及以上 ' + R.team[4] + '<br>特等奖：对应一等奖 × ' + R.specialFactor + '<br>C、D类：<b>暂无可用的校内奖励标准</b></div>' +
+  '</div><div class="col box" style="display:flex;flex-direction:column;justify-content:center">' +
+  '<div class="sm muted">例：A类 · 理工类（其他类）· 二等奖 · 3人团队</div>' +
+  '<div style="font-size:34px;margin:10px 0">' + C.fmt(R.student.sci.A[2]) + ' × ' + R.team[3] + ' =</div><div class="big">' + C.fmt(C.calcReward(D,{grade:'A',type:'sci',rank:2,size:3}).amount) + ' 元</div>' +
+  '<div class="sm" style="margin-top:10px">这是<b>预计团队奖励总额</b>，不是每人各拿这么多；学校没规定队内怎么分。</div></div></div>');
+
+/* 4 全年总览 */
+function monthNodes(m){ return D.calendar.nodes.filter(function(n){ return n.month === m; }); }
+S.push('<div class="kicker">第三件事 · 竞赛日历</div><h2>12 个月总览</h2>' +
+  '<div class="months grow">' + D.calendar.months.map(function(mp){
+    var ns = monthNodes(mp.month);
+    return '<div class="m' + (mp.month === NOW_M ? ' now' : '') + '"><div class="mh">' + mp.month + '月' + (mp.month === NOW_M ? '<small>现在</small>' : '') + '</div>' +
+      ns.slice(0, 3).map(function(n){ return '<div class="it"><span class="st st-' + n.status + '" style="font-size:14px">' + n.status + '</span>' + esc(nick(n.ids, n.name)) + ' · ' + esc(n.type.replace(/（.*?）/g, '')) + '</div>'; }).join('') +
+      (ns.length > 3 ? '<div class="it muted">另有 ' + (ns.length - 3) + ' 项，见季度页</div>' : '') +
+      (ns.length ? '' : '<div class="it muted">' + esc(mp.watch.split(/[；;]/)[0]) + '</div><div class="it"><span class="st st-备赛参考" style="font-size:14px">备赛参考</span></div>') +
+      '</div>';
+  }).join('') + '</div>');
+
+/* 5-8 季度详情 */
+[[1,2,3],[4,5,6],[7,8,9],[10,11,12]].forEach(function(q, qi){
+  S.push('<div class="kicker">竞赛日历 · 第' + (qi + 1) + '季度</div><h2>' + q[0] + '—' + q[2] + '月：查通知、做准备</h2>' +
+    '<div class="q3 grow">' + q.map(function(m){
+      var mp = D.calendar.months.filter(function(x){ return x.month === m; })[0] || { watch:'', prepare:'' };
+      var ns = monthNodes(m);
+      return '<div class="qm' + (m === NOW_M ? ' now' : '') + '"><div class="mh">' + m + '月' + (m === NOW_M ? ' <span class="st st-已核实" style="font-size:18px">现在</span>' : '') + '</div>' +
+        '<div class="lane"><b>🔎 要查报名通知</b>' + esc(mp.watch) + '</div>' +
+        '<div class="lane"><b>🛠 现在开始准备</b>' + esc(mp.prepare) + '</div>' +
+        '<div class="lane"><b>📅 时间节点</b>' + (ns.length ? ns.map(function(n){
+          return '<div class="node"><span class="st st-' + n.status + '">' + n.status + '</span><b>' + esc(nick(n.ids, n.name)) + '</b> ' + esc(n.date) + ' · ' + esc(n.type.replace(/（.*?）/g, '')) + ' <span class="muted">' + esc(n.year) + '届</span>' +
+            (n.source ? ' <a class="src" href="' + esc(n.source) + '" target="_blank" rel="noopener">[来源 ' + esc(n.source.replace(/^https?:\/\//, '').split('/')[0]) + ']</a>' : '') + '</div>';
+        }).join('') : '<span class="muted">本月暂无已核实节点；以官网和学校通知为准</span>') + '</div></div>';
+    }).join('') + '</div>');
+});
+
+/* 9-10 方向路线 */
+function routeCard(r){
+  return '<div class="route"><h3>' + esc(r.direction) + '</h3>' +
+    '<div><div class="lab">代表比赛</div>' + r.ids.map(compLine).join('') + '</div>' +
+    '<div><div class="lab">适合的作品</div>' + esc(r.works) + '</div>' +
+    '<div class="act">▶ 马上开始：' + esc(r.action) + '</div></div>';
+}
+S.push('<div class="kicker">第四件事 · 按方向选赛</div><h2>你是哪一类？（1/2）</h2><div class="row grow">' + D.routes.slice(0, 3).map(function(r){ return '<div class="col">' + routeCard(r) + '</div>'; }).join('') + '</div>');
+S.push('<div class="kicker">第四件事 · 按方向选赛</div><h2>你是哪一类？（2/2）</h2><div class="row grow">' + D.routes.slice(3).map(function(r){ return '<div class="col">' + routeCard(r) + '</div>'; }).join('') +
+  '<div class="col box sm"><b>选赛三步</b><br>1. 先看方向，挑 1—2 个代表比赛<br>2. 用查询器确认类别和层级<br>3. 对照日历，倒推开始准备的月份<br><br><span class="muted xs">A/B 标签来自学校83号文；方向是教学标签，不是计奖类型。</span></div></div>');
+
+/* 11 案例 */
+S.push('<div class="kicker">获奖案例</div><h2>别人做了什么？你能借鉴什么？</h2><div class="row grow">' + D.cases.map(function(c){
+  return '<div class="col box" style="font-size:23px;display:flex;flex-direction:column;gap:10px">' +
+    '<div class="xs muted">' + esc(c.comp) + ' · ' + c.ids.map(function(i){ return '<span class="g g-' + (byId[i] ? byId[i].grade : 'W') + '" style="font-size:16px;padding:0 8px">' + (byId[i] ? byId[i].grade + '类' : i) + '</span>'; }).join('') + '<b>' + esc(c.award) + '</b></div>' +
+    '<div style="font-size:25px;font-weight:800">' + esc(c.work) + '</div>' +
+    '<div><b>做了什么：</b>' + esc(c.what) + '</div>' +
+    '<div style="background:var(--hl);border-radius:10px;padding:10px 14px"><b>可以借鉴：</b>' + esc(c.learn) + '</div>' +
+    '<div class="xs muted" style="margin-top:auto">来源：<a href="' + esc(c.source) + '" target="_blank" rel="noopener">' + esc(c.source) + '</a>（只依据公开获奖题目，课前请打开核对）</div></div>';
+}).join('') + '</div>');
+
+/* 12 互动说明 */
+S.push('<div class="kicker">现场互动 · 5 分钟</div><h2>拿出手机，做三件事</h2><div class="grow">' +
+  '<div class="task"><div class="num">1</div><div><b>查一次赛事：</b>输入「蓝桥杯」，选择赛道和层级，看看学校认定为几类、由哪个学院承办。<div class="sm muted">追问：为什么不能直接给出一个答案？</div></div></div>' +
+  '<div class="task"><div class="num">2</div><div><b>算一次团队奖励：</b>A类 · 理工类（其他类）· 二等奖 · 3人团队。<div class="sm muted">先猜再算：每个人能拿多少？（答：学校只给团队总额，队内分配没有规定）</div></div></div>' +
+  '<div class="task"><div class="num">3</div><div><b>分清三笔钱：</b>学校奖励、主办方奖金、参赛成本——下一页翻牌。</div></div>' +
+  '</div><div class="row"><button class="btn" data-go="demo">进入查询器演示 ▶</button><a class="btn ghost" href="' + QUERY + '" target="_blank" rel="noopener" style="text-decoration:none">在新窗口打开查询器</a></div>');
+
+/* 13 三笔钱 */
+S.push('<div class="kicker">现场互动 · 翻牌</div><h2>这笔钱属于哪一类？（点击翻开）</h2><div class="money grow">' +
+  D.money.map(function(m){
+    var cls = m.kind === '学校奖励' ? 'g-A' : m.kind === '主办方奖金' ? 'g-B' : m.kind === '参赛成本' ? 'g-W' : 'g-C';
+    return '<button type="button" class="mcard"><b>' + esc(m.item) + '</b><div class="ans"><span class="g ' + cls + '" style="font-size:18px">' + esc(m.kind) + '</span>' + esc(m.note) + '</div></button>';
+  }).join('') + '</div><div class="sm muted" style="margin-top:12px">参赛 ≠ 一定获奖；获奖 ≠ 稳赚。报名费、差旅可能由承办单位经费承担，先问清楚再花钱。</div>');
+
+/* 14 演示页 */
+var DEMO = S.length;
+S.push('<div class="row" style="align-items:flex-end;margin-bottom:14px"><div style="flex:none"><div class="kicker">现场演示</div><h2 style="margin:4px 0 0;white-space:nowrap">查询器现场演示</h2></div>' +
+  '<div class="col demo-btns" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">' +
+  '<button class="btn ghost" data-demo="q=蓝桥杯">查：蓝桥杯</button>' +
+  '<button class="btn ghost" data-demo="q=中国大学生计算机设计大赛重庆赛">查：计设重庆赛</button>' +
+  '<button class="btn ghost" data-demo="q=数维杯">查：未收录赛事</button>' +
+  '<button class="btn ghost" data-demo="calc=A,sci,2,3">算：A类理工其他二等奖3人</button>' +
+  '<a class="btn" href="' + QUERY + '" target="_blank" rel="noopener" style="text-decoration:none">新窗口打开</a></div></div>' +
+  '<div class="row grow"><div style="width:470px;flex:none"><iframe id="demoFrame" title="查询器演示" src="about:blank"></iframe></div>' +
+  '<div class="col box sm"><b>演示脚本</b><ol style="margin:8px 0 0;padding-left:28px;line-height:1.7">' +
+  '<li>点「查：蓝桥杯」→ 先选赛道和层级，再看结果</li><li>点「查：计设重庆赛」→ 直接匹配到B类（附件2第42项）</li>' +
+  '<li>点「查：未收录赛事」→ 显示「待学校确认」，不会自动判C类</li><li>点「算：…3人」→ 预计团队奖励总额 2,400 元</li></ol>' +
+  '<div class="xs muted" style="margin-top:14px">在左侧页面里操作时，键盘输入进入查询器；点一下左侧以外的区域，或按 PageUp / PageDown，即可继续翻页。<br>学生手机：把「手机单文件版」里的 HTML 发给学生，用手机浏览器打开即可。</div></div></div>');
+
+/* 15 结尾 */
+S.push('<div class="kicker">下课前</div><h2>这周就能做的三件事</h2><div class="grow sm" style="display:flex;flex-direction:column;gap:18px">' +
+  '<div class="box">1. 用查询器确认 1 个目标赛事的类别、层级和承办学院</div>' +
+  '<div class="box">2. 对照日历写下：什么时候查报名通知、什么时候开始准备</div>' +
+  '<div class="box">3. 按你的方向，完成「马上开始」的那一个准备动作</div>' +
+  '<div class="xs muted">所有日期以当届官方通知和学校承办单位通知为准；奖励以学校审批和主办方证书为准。资料来源：' + esc(D.meta.title) + ' v' + esc(D.meta.version) + '。</div></div>');
+
+/* ---------- 渲染与翻页 ---------- */
+stage.innerHTML = S.map(function(h, i){ return '<section class="slide" data-i="' + i + '">' + h + footer() + '</section>'; }).join('');
+var slides = stage.querySelectorAll('.slide'), N = slides.length, cur = 0;
+slides.forEach(function(s, i){ s.querySelector('.pgno').textContent = (i + 1) + ' / ' + N; });
+
+function fit(){
+  var s = Math.min(window.innerWidth / 1600, window.innerHeight / 900) * 0.98;
+  stage.style.transform = 'scale(' + s + ')';
+}
+window.addEventListener('resize', fit); fit();
+
+var demoLoaded = false;
+function go(i){
+  cur = Math.max(0, Math.min(N - 1, i));
+  slides.forEach(function(s, k){ s.classList.toggle('on', k === cur); });
+  document.getElementById('pg').textContent = (cur + 1) + ' / ' + N;
+  document.querySelector('#bar i').style.width = ((cur + 1) / N * 100) + '%';
+  if (cur === DEMO && !demoLoaded) { setDemo('tab=q'); demoLoaded = true; }
+  if (location.hash !== '#' + (cur + 1)) history.replaceState(null, '', '#' + (cur + 1));
+}
+function setDemo(params){
+  var f = document.getElementById('demoFrame');
+  // 先清空再加载，保证同一个按钮可重复点击
+  f.src = 'about:blank';
+  setTimeout(function(){ f.src = QUERY + '#demo=1&' + params; }, 30);
+}
+stage.addEventListener('click', function(e){
+  var t = e.target.closest('[data-demo]'); if (t) { setDemo(t.getAttribute('data-demo')); return; }
+  var g = e.target.closest('[data-go]'); if (g) { go(DEMO); return; }
+  var m = e.target.closest('.mcard'); if (m) m.classList.toggle('open');
+});
+function toggleFull(){ if (!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+function toggleTheme(){ var r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; }
+function onKey(k){
+  if (['ArrowRight','ArrowDown','PageDown',' ','Enter','n'].indexOf(k) >= 0) go(cur + 1);
+  else if (['ArrowLeft','ArrowUp','PageUp','Backspace','p'].indexOf(k) >= 0) go(cur - 1);
+  else if (k === 'Home') go(0);
+  else if (k === 'End') go(N - 1);
+  else if (k === 'q' || k === 'Q') go(DEMO);
+  else if (k === 'f' || k === 'F') toggleFull();
+  else if (k === 't' || k === 'T') toggleTheme();
+  else return false;
+  return true;
+}
+document.addEventListener('keydown', function(e){
+  if (e.target.closest && e.target.closest('input,textarea')) return;
+  if ((e.key === ' ' || e.key === 'Enter') && e.target.closest && e.target.closest('button,a')) return;
+  if (onKey(e.key)) e.preventDefault();
+});
+// 查询器在 iframe 中时，会把 PageUp/PageDown 转发过来
+window.addEventListener('message', function(e){ if (e.data && e.data.slideKey) onKey(e.data.slideKey); });
+document.getElementById('bPrev').onclick = function(){ go(cur - 1); };
+document.getElementById('bNext').onclick = function(){ go(cur + 1); };
+document.getElementById('bDemo').onclick = function(){ go(DEMO); };
+document.getElementById('bFull').onclick = toggleFull;
+document.getElementById('bTheme').onclick = toggleTheme;
+var start = parseInt(location.hash.slice(1), 10);
+go(isNaN(start) ? 0 : start - 1);
+window.__slides = { count: N, demo: DEMO, go: go, cur: function(){ return cur; } };
+})();
+</script>
+</body>
+</html>

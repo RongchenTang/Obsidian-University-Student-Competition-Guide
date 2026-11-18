@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>竞赛查询与奖金计算器</title>
+<style>
+/* 方案一 · 学院蓝：正式稳重 */
+:root{
+  --bg:#f3f1ea; --card:#ffffff; --ink:#13213b; --muted:#5f6a7d; --line:#d8d3c4; --soft:#f6f3ea;
+  --navy:#0f2a5c; --on-navy:#ffffff; --gold:#a77b1f; --gold-soft:#fbf4e3;
+  --a:#0f2a5c; --a-soft:#e8edf6; --b:#1e6b4f; --b-soft:#e3f1ea; --warn:#9a6a10; --warn-soft:#fbf1dc;
+  --cd:#5b616e; --cd-soft:#ecebe6; --ok:#0f2a5c; --accent:#0f2a5c;
+  --serif:"Source Han Serif SC","Noto Serif SC","Noto Serif CJK SC","Songti SC","STSong","SimSun",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c1220; --card:#141c2e; --ink:#e9edf5; --muted:#9aa5b8; --line:#2a3550; --soft:#1a2338;
+    --navy:#0a1838; --on-navy:#f2f4f8; --gold:#d8ae55; --gold-soft:#2c2412;
+    --a:#9fb8ec; --a-soft:#1c2a4c; --b:#6fd0a8; --b-soft:#14302a; --warn:#e9bb5c; --warn-soft:#33270f;
+    --cd:#b8bdc8; --cd-soft:#262c38; --ok:#d8ae55; --accent:#d8ae55;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c1220; --card:#141c2e; --ink:#e9edf5; --muted:#9aa5b8; --line:#2a3550; --soft:#1a2338;
+  --navy:#0a1838; --on-navy:#f2f4f8; --gold:#d8ae55; --gold-soft:#2c2412;
+  --a:#9fb8ec; --a-soft:#1c2a4c; --b:#6fd0a8; --b-soft:#14302a; --warn:#e9bb5c; --warn-soft:#33270f;
+  --cd:#b8bdc8; --cd-soft:#262c38; --ok:#d8ae55; --accent:#d8ae55;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif}
+button,input{font:inherit;color:inherit}
+a{color:var(--accent)}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 48px}
+/* 顶部深蓝通栏（铺满整个页面宽度） */
+header.top{background:var(--navy);color:var(--on-navy);padding:26px 0 22px;box-shadow:0 0 0 100vmax var(--navy);clip-path:inset(0 -100vmax);border-bottom:3px solid var(--gold)}
+header.top h1{font-family:var(--serif);font-size:25px;font-weight:900;margin:0;letter-spacing:1px}
+header.top .sub{color:var(--on-navy);opacity:.72;font-size:12.5px;margin-top:4px}
+.toprow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.theme{white-space:nowrap;flex:none;border:1px solid rgba(255,255,255,.45);background:transparent;color:var(--on-navy);border-radius:0;padding:6px 10px;cursor:pointer;font-size:13px;min-height:36px}
+.demo-banner{background:var(--gold-soft);color:var(--gold);font-size:13px;padding:6px 10px;margin-top:10px;border-left:3px solid var(--gold)}
+nav.tabs{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:0;padding:14px 0 12px;border-bottom:1px solid var(--line)}
+nav.tabs button{flex:1;border:1.5px solid var(--navy);background:var(--card);color:var(--ink);border-radius:0;padding:10px 6px;font-weight:700;cursor:pointer;min-height:44px;letter-spacing:1px}
+nav.tabs button + button{border-left:0}
+nav.tabs button[aria-selected="true"]{background:var(--navy);color:var(--on-navy)}
+:root[data-theme="dark"] nav.tabs button{border-color:var(--gold)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) nav.tabs button{border-color:var(--gold)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:0;padding:18px;margin-top:16px;box-shadow:0 1px 0 var(--line)}
+.search{display:flex;gap:0}
+.search input{flex:1;min-width:0;border:1.5px solid var(--navy);border-right:0;background:var(--card);border-radius:0;padding:12px 14px;font-size:17px;min-height:50px}
+#pane-b .search input{border-right:1.5px solid var(--navy)}
+.search input:focus{outline:2px solid var(--gold);outline-offset:-2px}
+.btn{border:1.5px solid var(--navy);background:var(--navy);color:var(--on-navy);border-radius:0;padding:0 20px;font-weight:700;cursor:pointer;min-height:50px;letter-spacing:1px}
+.btn.ghost{background:transparent;color:var(--accent);border-color:var(--accent)}
+:root[data-theme="dark"] .btn{border-color:var(--gold);background:var(--gold);color:#1a1405}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn{border-color:var(--gold);background:var(--gold);color:#1a1405}}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{border:1px solid var(--line);background:var(--soft);border-radius:0;padding:6px 12px;font-size:14px;cursor:pointer;min-height:36px}
+.chip:hover{border-color:var(--navy)}
+.chip[aria-pressed="true"]{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+h2{font-family:var(--serif);font-size:20px;font-weight:900;margin:0 0 8px;line-height:1.4}
+h3{font-size:13px;margin:20px 0 6px;color:var(--muted);font-weight:700;letter-spacing:3px}
+.step{display:inline-block;font-size:12px;font-weight:700;color:var(--gold);letter-spacing:2px;border-bottom:1.5px solid var(--gold);padding-bottom:2px;margin-bottom:10px}
+.hint{background:var(--soft);border-left:3px solid var(--line);padding:10px 12px;font-size:14px;margin:8px 0 4px}
+.fam{border:1px solid var(--line);border-top:3px solid var(--navy);padding:12px 14px;margin-top:12px;background:var(--card)}
+.fam .nm{font-weight:700}
+.fam .id{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--gold);margin-right:6px;font-weight:700}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.opt{border:1.5px solid var(--accent);color:var(--accent);background:transparent;border-radius:0;padding:8px 12px;cursor:pointer;font-weight:700;min-height:44px;text-align:left}
+.opt:hover{background:var(--a-soft)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-weight:900;border-radius:0;padding:6px 16px;font-size:20px;letter-spacing:1px}
+.g-A{background:var(--navy);color:var(--on-navy)}
+.g-B{background:var(--b);color:#fff}
+.g-C,.g-D{background:var(--cd-soft);color:var(--cd)}
+.g-PENDING,.g-UNCONFIRMED{background:var(--warn-soft);color:var(--warn);box-shadow:inset 0 0 0 1.5px var(--warn)}
+:root[data-theme="dark"] .g-A{background:var(--a-soft);color:var(--a);box-shadow:inset 0 0 0 1.5px var(--a)}
+:root[data-theme="dark"] .g-B{background:var(--b-soft);color:var(--b);box-shadow:inset 0 0 0 1.5px var(--b)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .g-A{background:var(--a-soft);color:var(--a);box-shadow:inset 0 0 0 1.5px var(--a)}:root:not([data-theme="light"]) .g-B{background:var(--b-soft);color:var(--b);box-shadow:inset 0 0 0 1.5px var(--b)}}
+.tag{display:inline-block;font-size:12px;font-weight:700;border-radius:0;padding:1px 7px;margin-right:6px;vertical-align:1px}
+dl.kv{display:grid;grid-template-columns:7.5em 1fr;gap:10px 12px;margin:16px 0 0;border-top:1px solid var(--line);padding-top:14px}
+dl.kv dt{color:var(--muted);font-size:13px;letter-spacing:1px}
+dl.kv dd{margin:0}
+ul.src{margin:4px 0 0;padding-left:18px}
+ul.src li{margin:2px 0}
+.note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:10px 12px;margin-top:12px;font-size:14px}
+.okbox{border-left-color:var(--gold) !important;background:var(--gold-soft) !important}
+.node{display:flex;gap:10px;padding:8px 0;border-top:1px dashed var(--line);font-size:14px}
+.node:first-child{border-top:0}
+.st{flex:none;font-size:12px;font-weight:700;padding:0 7px;height:fit-content;border:1.5px solid currentColor}
+.st-已核实{color:var(--b)}
+.st-备赛参考{color:var(--muted)}
+.st-待公布{color:var(--warn)}
+fieldset{border:0;padding:0;margin:0 0 18px}
+legend{font-family:var(--serif);font-weight:900;font-size:16px;margin-bottom:8px;padding:0}
+.seg{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:flex;align-items:center;justify-content:center;text-align:center;min-height:46px;border:1.5px solid var(--line);border-radius:0;padding:6px 8px;cursor:pointer;background:var(--card);font-size:15px;line-height:1.3}
+.seg span:hover{border-color:var(--navy)}
+.seg input:checked + span{border-color:var(--navy);background:var(--navy);color:var(--on-navy);font-weight:700}
+:root[data-theme="dark"] .seg input:checked + span{border-color:var(--gold);background:var(--gold);color:#1a1405}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .seg input:checked + span{border-color:var(--gold);background:var(--gold);color:#1a1405}}
+.seg input:focus-visible + span{outline:2px solid var(--gold);outline-offset:2px}
+.fhint{font-size:13px;color:var(--muted);margin-top:6px}
+.result{margin-top:4px;scroll-margin-top:84px;border-top:4px solid var(--navy)}
+.amount{font-family:var(--serif);font-size:48px;font-weight:900;color:var(--ok);line-height:1.15;font-variant-numeric:tabular-nums;display:inline-block;border-bottom:3px double var(--gold);padding-bottom:2px;margin-top:4px}
+.amount small{font-size:20px;margin-left:4px}
+.formula{font-family:ui-monospace,Consolas,monospace;background:var(--soft);border:1px solid var(--line);padding:10px 12px;margin-top:14px;font-size:14px;overflow-wrap:anywhere}
+.reslabel{font-weight:700;color:var(--muted);letter-spacing:2px;font-size:13px}
+.money{display:grid;gap:8px;margin-top:8px}
+.money div{background:var(--soft);border-left:3px solid var(--line);padding:8px 12px;font-size:14px}
+.list .row{display:flex;gap:12px;align-items:flex-start;padding:11px 4px;border-top:1px solid var(--line);cursor:pointer}
+.list .row:hover{background:var(--soft)}
+.list .row:first-child{border-top:0}
+.list .gid{flex:none;width:46px;text-align:center;font-weight:800;padding:2px 0;font-size:13px;font-family:ui-monospace,Consolas,monospace}
+.empty{padding:18px 0;text-align:center}
+footer{margin-top:28px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+.hidden{display:none !important}
+@media (max-width:420px){dl.kv{grid-template-columns:1fr;gap:2px}dl.kv dd{margin-bottom:8px}.amount{font-size:40px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="toprow">
+      <div>
+        <h1>竞赛查询与奖金计算器</h1>
+        <div class="sub" id="meta">正在加载资料库…</div>
+      </div>
+      <button class="theme" id="themeBtn" type="button" aria-label="切换深浅色">深/浅</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-q" aria-selected="true" data-tab="q">查赛事</button>
+    <button role="tab" id="tab-c" aria-selected="false" data-tab="c">算奖励</button>
+    <button role="tab" id="tab-b" aria-selected="false" data-tab="b">全部赛事</button>
+  </nav>
+
+  <!-- 查询 -->
+  <section id="pane-q" role="tabpanel">
+    <div class="card">
+      <form class="search" id="qform" autocomplete="off">
+        <input id="q" type="search" enterkeyhint="search" placeholder="输入赛事全称或简称，如：蓝桥杯" aria-label="赛事名称">
+        <button class="btn" type="submit">查询</button>
+      </form>
+      <div class="chips" id="examples"></div>
+    </div>
+    <div id="qout"></div>
+  </section>
+
+  <!-- 计算 -->
+  <section id="pane-c" role="tabpanel" class="hidden">
+    <div class="card">
+      <h2>学生获奖奖励估算</h2>
+      <div class="small muted" id="calcFrom">依次确认 4 个条件，再显示公式和金额。</div>
+      <form id="cform" style="margin-top:14px">
+        <fieldset>
+          <legend>① 赛事类别</legend>
+          <div class="seg" id="f-grade"></div>
+          <div class="fhint" id="h-grade">不知道类别？先在「查赛事」里查一下。</div>
+        </fieldset>
+        <fieldset>
+          <legend>② 奖励专业类型</legend>
+          <div class="seg" id="f-type"></div>
+          <div class="fhint" id="h-type">这是学校计奖用的类型，不是「计算机类」「商科类」这种兴趣方向。</div>
+        </fieldset>
+        <fieldset>
+          <legend>③ 获奖等次（以主办方证书为准）</legend>
+          <div class="seg" id="f-rank"></div>
+        </fieldset>
+        <fieldset>
+          <legend>④ 参赛人数</legend>
+          <div class="seg" id="f-size"></div>
+        </fieldset>
+      </form>
+    </div>
+    <div class="card result" id="cout" aria-live="polite"></div>
+    <div class="card">
+      <h2>三笔钱，别混在一起</h2>
+      <div class="money" id="money"></div>
+    </div>
+  </section>
+
+  <!-- 浏览 -->
+  <section id="pane-b" role="tabpanel" class="hidden">
+    <div class="card">
+      <div class="search"><input id="bq" type="search" placeholder="在列表中筛选名称或单位" aria-label="筛选"></div>
+      <div class="chips" id="bgrade"></div>
+      <div class="chips" id="bgroup"></div>
+      <div class="small muted" id="bcount" style="margin-top:8px"></div>
+    </div>
+    <div class="card list" id="blist"></div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/core.js"></script>
+<script>
+(function(){
+'use strict';
+var D = window.COMP_DATA, C = window.CompCore;
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function linkify(s){ return esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>'); }
+
+if (!D || !C) {
+  document.querySelector('.wrap').innerHTML = '<div class="card"><h2>数据没有加载</h2><p>请确认本页面和 <b>assets</b> 文件夹放在同一个目录里，且 assets 中有 data.js 和 core.js。</p></div>';
+  return;
+}
+
+/* 主题 */
+try { var th = localStorage.getItem('comp-theme'); if (th) document.documentElement.dataset.theme = th; } catch(e){}
+$('themeBtn').onclick = function(){
+  var dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  var next = dark ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('comp-theme', next); } catch(e){}
+};
+
+$('meta').textContent = '资料库 v' + D.meta.version + ' · 更新于 ' + D.meta.updated + ' · 依据 ' + D.meta.policy;
+$('foot').innerHTML = '数据来源：《' + esc(D.meta.title) + '》v' + esc(D.meta.version) + '（由 Markdown 生成于 ' + esc(D.meta.generatedAt) + '）。本工具只做查询与估算，不代替教务处的正式认定、承办单位通知和财务审批。';
+
+var byId = {}; D.competitions.concat(D.approvedCD || []).forEach(function(c){ byId[c.id] = c; });
+var GRADE_TEXT = { A:'A类', B:'B类', C:'C类', D:'D类', PENDING:'待学校确认', UNCONFIRMED:'待学校确认' };
+
+/* ---------- 标签页 ---------- */
+function showTab(t){
+  ['q','c','b'].forEach(function(k){
+    $('pane-' + k).classList.toggle('hidden', k !== t);
+    $('tab-' + k).setAttribute('aria-selected', k === t ? 'true' : 'false');
+  });
+}
+document.querySelectorAll('nav.tabs button').forEach(function(b){ b.onclick = function(){ showTab(b.dataset.tab); }; });
+
+/* ---------- 查询 ---------- */
+['蓝桥杯','中国大学生计算机设计大赛重庆赛','数模','挑战杯','三创赛','合泰杯'].forEach(function(x){
+  var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = x;
+  b.onclick = function(){ $('q').value = x; runSearch(x); };
+  $('examples').appendChild(b);
+});
+$('qform').onsubmit = function(e){ e.preventDefault(); runSearch($('q').value); };
+
+var lastSearch = null;
+function runSearch(q){
+  q = String(q || '').trim();
+  if (!q) { $('qout').innerHTML = ''; return; }
+  var r = C.search(D, q);
+  lastSearch = { q: q, r: r };
+  var nCand = r.families.length + r.standalone.length;
+  if (!nCand) { renderResult(C.unknownResult(q), { unknown: true, weak: r.weak }); return; }
+  if (r.autoPick) { pick(r.autoPick, true); return; }
+  renderCandidates(q, r);
+}
+
+function renderCandidates(q, r){
+  var h = '<div class="card"><span class="step">第 1 步 · 确认赛道和层级</span>';
+  h += '<h2>「' + esc(q) + '」可能对应 ' + (r.families.length + r.standalone.length) + ' 个条目</h2>';
+  h += '<div class="small muted">先选择你参加的<b>具体赛道</b>和<b>赛事层级</b>，确认后再显示学校认定类别、承办单位和依据。</div>';
+  if (r.hint && r.hint.ask) h += '<div class="hint">需要确认：' + esc(r.hint.ask) + '</div>';
+  r.families.forEach(function(f){
+    h += '<div class="fam"><div><span class="id">' + f.a.id + '</span><span class="nm">' + esc(f.a.name) + '</span></div>';
+    h += '<div class="opts">';
+    f.options.forEach(function(o){ h += '<button type="button" class="opt" data-key="' + esc(o.key) + '">' + esc(o.level) + '</button>'; });
+    h += '</div></div>';
+  });
+  r.standalone.forEach(function(c){
+    h += '<div class="fam"><div><span class="id">' + c.id + '</span><span class="nm">' + esc(c.name) + '</span></div>';
+    h += '<div class="opts"><button type="button" class="opt" data-key="' + c.id + '|X">' + (c.grade === 'B' ? '重庆市级赛事（附件2）' : '学校批准赛事') + '</button></div></div>';
+  });
+  h += '</div>';
+  $('qout').innerHTML = h;
+  $('qout').querySelectorAll('.opt').forEach(function(b){ b.onclick = function(){ pick(findOpt(b.dataset.key), false); }; });
+}
+
+function findOpt(key){
+  var r = lastSearch && lastSearch.r;
+  if (r) {
+    for (var i = 0; i < r.families.length; i++) for (var j = 0; j < r.families[i].options.length; j++) if (r.families[i].options[j].key === key) return r.families[i].options[j];
+  }
+  return optFromKey(key);
+}
+// 浏览列表或链接里直接打开某个条目
+function optFromKey(key){
+  var p = key.split('|'), c = byId[p[0]];
+  if (!c) return null;
+  if (p[1] === 'X' || c.grade !== 'A') return { key: c.id + '|X', grade: c.grade, compId: c.id, level: c.grade === 'B' ? '重庆市级（附件2）' : '学校批准记录' };
+  var fam = C.search(D, c.name).families.filter(function(f){ return f.a.id === c.id; })[0];
+  var opts = fam ? fam.options : [{ key: c.id + '|N', level: '全国赛（含全国总决赛）', grade: 'A', compId: c.id, aId: c.id }];
+  return opts.filter(function(o){ return o.key === key; })[0] || opts[0];
+}
+
+var current = null;
+function pick(opt, auto){
+  if (!opt) return;
+  var res = C.resolve(D, opt);
+  renderResult(res, { auto: auto, opt: opt });
+}
+
+function nodesFor(ids){
+  return D.calendar.nodes.filter(function(n){ return n.ids.some(function(i){ return ids.indexOf(i) >= 0; }); });
+}
+var TIP_MAP = {
+  '计算机与AI': ['AI/软件/APP', '算法/编程'], '商科与创新创业': ['商业与创新创业', '市调/科研/统计'],
+  '设计、数媒与文旅': ['设计/广告/数媒'], '数学、科研与语言': ['市调/科研/统计'], '工程与硬件': ['电子/机器人/工程'],
+  '建筑、测绘与物流': ['电子/机器人/工程']
+};
+
+function renderResult(res, ctx){
+  current = res;
+  var h = '<div class="card">';
+  if (ctx.auto) h += '<span class="step">已按输入的层级直接匹配</span>';
+  else if (!ctx.unknown) h += '<span class="step">第 2 步 · 认定结果</span>';
+  h += '<div><span class="badge g-' + res.grade + '">' + GRADE_TEXT[res.grade] + '</span></div>';
+  h += '<h2 style="margin-top:12px">' + esc(res.title) + '</h2>';
+  if (ctx.unknown) {
+    h += '<div class="small muted">资料库中没有找到这个赛事。</div>';
+  }
+  h += '<dl class="kv">';
+  if (res.level) h += '<dt>赛事层级</dt><dd>' + esc(res.level) + '</dd>';
+  if (!ctx.unknown) {
+    h += '<dt>校内承办单位</dt><dd>' + (res.unit && !/未在附件标明/.test(res.unit) ? esc(res.unit) : '待学校确认') + (res.unitNote ? '<div class="small muted">' + esc(res.unitNote) + '</div>' : '') + '</dd>';
+    h += '<dt>原表备注</dt><dd>' + (res.hardware ? '硬件类' : '未标注硬件类') + '</dd>';
+    if (res.group) h += '<dt>方向</dt><dd>' + esc(res.group) + '</dd>';
+  }
+  h += '<dt>认定来源</dt><dd><ul class="src">' + res.sources.map(function(s){ return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></dd>';
+  h += '</dl>';
+  res.notes.forEach(function(n){ h += '<div class="note">' + esc(n) + '</div>'; });
+
+  if (ctx.unknown && ctx.weak && ctx.weak.length) {
+    h += '<h3>你要找的是不是：</h3><div class="opts">';
+    ctx.weak.forEach(function(c){ h += '<button type="button" class="opt" data-q="' + esc(c.name) + '">' + esc(c.name) + '</button>'; });
+    h += '</div>';
+  }
+
+  if (!ctx.unknown) {
+    var idList = [res.comp && res.comp.id, res.parentA && res.parentA.id].filter(Boolean);
+    var ns = nodesFor(idList);
+    if (ns.length) {
+      h += '<h3>时间节点</h3>';
+      ns.forEach(function(n){
+        h += '<div class="node"><span class="st st-' + n.status + '">' + n.status + '</span><div><b>' + esc(n.date) + '</b> · ' + esc(n.type) + ' <span class="muted">（' + esc(n.year) + '届）</span>' + (n.source ? '<div class="small"><a href="' + esc(n.source) + '" target="_blank" rel="noopener">官方来源</a></div>' : '') + '</div></div>';
+      });
+    }
+    var tipTypes = TIP_MAP[res.group] || [];
+    var tips = D.tips.filter(function(t){ return tipTypes.indexOf(t.type) >= 0; });
+    if (tips.length) {
+      h += '<h3>备赛提醒（通用建议，非官方评分细则）</h3>';
+      tips.forEach(function(t){ h += '<div class="hint"><b>' + esc(t.type) + '</b><br>评委常看：' + esc(t.focus) + '<br>常见错误：' + esc(t.mistakes) + '</div>'; });
+    }
+  }
+
+  h += '<div class="opts" style="margin-top:16px">';
+  h += '<button type="button" class="btn" id="toCalc">用这个结果算奖励</button>';
+  if (lastSearch && (lastSearch.r.families.length + lastSearch.r.standalone.length) > 0 && !ctx.unknown) h += '<button type="button" class="btn ghost" id="back">换一个赛道/层级</button>';
+  h += '</div></div>';
+  $('qout').innerHTML = h;
+  var tc = $('toCalc'); if (tc) tc.onclick = function(){ calcFromResult(res); };
+  var bk = $('back'); if (bk) bk.onclick = function(){ renderCandidates(lastSearch.q, lastSearch.r); };
+  $('qout').querySelectorAll('.opt[data-q]').forEach(function(b){ b.onclick = function(){ $('q').value = b.dataset.q; runSearch(b.dataset.q); }; });
+}
+
+/* ---------- 计算 ---------- */
+var F = { grade: null, type: null, rank: null, size: null };
+var OPTS = {
+  grade: [['A','A类'],['B','B类'],['C','C类'],['D','D类'],['UNCONFIRMED','待学校确认']],
+  type: [['hw','理工类（硬件类）'],['sci','理工类（其他类）'],['hum','人文社科类'],['unsure','还不确定']],
+  rank: [['S','特等奖'],['1','一等奖'],['2','二等奖'],['3','三等奖'],['X','金/银/铜奖、优秀奖等']],
+  size: [['1','1人（个人）'],['2','2人'],['3','3人'],['4','4人及以上']]
+};
+Object.keys(OPTS).forEach(function(k){
+  $('f-' + k).innerHTML = OPTS[k].map(function(o){
+    return '<label><input type="radio" name="' + k + '" value="' + o[0] + '"><span>' + o[1] + '</span></label>';
+  }).join('');
+  $('f-' + k).addEventListener('change', function(e){ F[k] = e.target.value; renderCalc(); });
+});
+function setField(k, v){
+  F[k] = v == null ? null : String(v);
+  document.querySelectorAll('input[name="' + k + '"]').forEach(function(i){ i.checked = i.value === F[k]; });
+}
+
+function calcFromResult(res){
+  var g = res.grade === 'PENDING' ? 'UNCONFIRMED' : res.grade;
+  setField('grade', g);
+  setField('type', res.hardware && (g === 'A' || g === 'B') ? 'hw' : null);
+  $('calcFrom').innerHTML = '赛事：<b>' + esc(res.title) + '</b>' + (res.level ? '（' + esc(res.level) + '）' : '');
+  $('h-type').textContent = res.hardware
+    ? '原表备注为「硬件类」，已预选 理工类（硬件类）；最终以学校认定为准。'
+    : '原表未标注硬件类。它算 理工类（其他类）还是 人文社科类，需要学校确认；拿不准就选「还不确定」。';
+  showTab('c'); renderCalc();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderCalc(){
+  var inp = { grade: F.grade, type: F.type, rank: F.rank === null ? null : (F.rank === 'S' || F.rank === 'X' ? F.rank : +F.rank), size: F.size === null ? null : +F.size };
+  var r = C.calcReward(D, inp), h = '';
+  if (r.status === 'NO_STANDARD') {
+    h = '<div class="reslabel">计算结果</div><div class="amount" style="color:var(--warn);font-size:26px;border-bottom-color:var(--warn)">' + esc(r.message) + '</div><p>' + esc(r.detail) + '</p>';
+    if (r.verify.length) h += '<div class="note"><b>需要核实的条件</b><ul class="src">' + r.verify.map(function(v){ return '<li>' + esc(v) + '</li>'; }).join('') + '</ul></div>';
+  } else if (r.status === 'MISSING') {
+    h = '<div class="reslabel">还差 ' + r.missing.length + ' 个条件</div><p class="muted">请确认：' + r.missing.join('、') + '。</p>';
+  } else if (r.status === 'VERIFY') {
+    h = '<div class="reslabel">' + esc(r.label) + '</div><div class="amount" style="color:var(--warn);font-size:26px;border-bottom-color:var(--warn)">先核实条件，再算金额</div>';
+    h += '<div class="note"><b>需要核实的条件</b><ul class="src">' + r.verify.map(function(v){ return '<li>' + esc(v) + '</li>'; }).join('') + '</ul></div>';
+    if (r.range) {
+      h += '<h3>核实后可能是（仅供参考，非学校最终认定）</h3>';
+      h += r.range.map(function(x){ return '<div class="node"><div style="flex:1">' + esc(x.type) + '</div><b>' + C.fmt(x.amount) + ' 元</b></div>'; }).join('');
+    }
+  } else if (r.status === 'OK') {
+    h = '<div class="reslabel">' + esc(r.label) + '</div><div class="amount" data-testid="amount">' + C.fmt(r.amount) + '<small>元</small></div>';
+    h += '<div class="formula">' + r.lines.map(esc).join('<br>') + '<br><b>' + esc(r.formula) + '</b></div>';
+    h += '<div class="note okbox">';
+    if (+F.size > 1) h += '这是<b>整个团队</b>的奖励总额，不是每人金额；学校文件没有规定队内怎么分。<br>';
+    h += '按 ' + esc(D.meta.policy) + ' 估算。获奖等次以主办方证书为准，同一作品按最高等次计、不重复；成绩公布并发文后，次月10日前到教务处办理。</div>';
+  }
+  $('cout').innerHTML = h;
+}
+$('money').innerHTML = D.money.map(function(m){ return '<div><span class="tag ' + (m.kind === '学校奖励' ? 'g-A' : m.kind === '主办方奖金' ? 'g-B' : m.kind === '参赛成本' ? 'g-PENDING' : 'g-C') + '">' + esc(m.kind) + '</span><b>' + esc(m.item) + '</b><div class="muted small" style="margin-top:2px">' + esc(m.note) + '</div></div>'; }).join('');
+
+/* ---------- 浏览 ---------- */
+var BF = { grade: 'ALL', group: 'ALL', text: '' };
+var groups = []; D.competitions.forEach(function(c){ if (groups.indexOf(c.group) < 0) groups.push(c.group); });
+function chipRow(el, items, key){
+  el.innerHTML = items.map(function(it){ return '<button type="button" class="chip" data-v="' + esc(it[0]) + '" aria-pressed="' + (BF[key] === it[0]) + '">' + esc(it[1]) + '</button>'; }).join('');
+  el.querySelectorAll('.chip').forEach(function(b){ b.onclick = function(){ BF[key] = b.dataset.v; chipRow(el, items, key); renderList(); }; });
+}
+chipRow($('bgrade'), [['ALL','全部类别'],['A','A类 · 80'],['B','B类（附件2）· 46']], 'grade');
+chipRow($('bgroup'), [['ALL','全部方向']].concat(groups.map(function(g){ return [g, g]; })), 'group');
+$('bq').oninput = function(){ BF.text = this.value; renderList(); };
+function renderList(){
+  var t = C.normalize(BF.text);
+  var items = D.competitions.filter(function(c){
+    return (BF.grade === 'ALL' || c.grade === BF.grade) && (BF.group === 'ALL' || c.group === BF.group) &&
+      (!t || C.normalize(c.name + c.unit + c.aliases.join('')).indexOf(t) >= 0);
+  });
+  $('bcount').textContent = '共 ' + items.length + ' 条。附件2之外，A类赛事对应的省市级/分赛区选拔赛也属于B类（需核实对应关系）；C/D类须有学校批准记录。';
+  $('blist').innerHTML = items.length ? items.map(function(c){
+    return '<div class="row" tabindex="0" data-id="' + c.id + '"><span class="gid g-' + c.grade + '">' + c.id + '</span><div><div>' + esc(c.name) + '</div><div class="small muted">' + esc(c.unit) + ' · ' + esc(c.group) + (c.hardware ? ' · 原表标硬件类' : '') + '</div></div></div>';
+  }).join('') : '<div class="empty muted">没有符合条件的赛事</div>';
+  $('blist').querySelectorAll('.row').forEach(function(r){
+    var go = function(){ lastSearch = null; var o = optFromKey(r.dataset.id + (byId[r.dataset.id].grade === 'A' ? '|N' : '|X')); pick(o, false); showTab('q'); window.scrollTo({ top: 0 }); };
+    r.onclick = go; r.onkeydown = function(e){ if (e.key === 'Enter') go(); };
+  });
+}
+renderList();
+renderCalc();
+
+/* ---------- 链接参数：#q=蓝桥杯 / #calc=A,sci,2,3 / #tab=b ---------- */
+function applyHash(){
+  var p = new URLSearchParams(location.hash.slice(1));
+  if (p.get('demo') && !document.querySelector('.demo-banner')) document.querySelector('header.top').insertAdjacentHTML('beforeend', '<div class="demo-banner">课堂演示模式：可直接在这里输入和点击</div>');
+  if (p.get('q')) { showTab('q'); $('q').value = p.get('q'); runSearch(p.get('q')); }
+  if (p.get('calc')) {
+    var v = p.get('calc').split(',');
+    setField('grade', v[0]); setField('type', v[1]); setField('rank', v[2]); setField('size', v[3]);
+    showTab('c'); renderCalc();
+    if (F.grade && F.type && F.rank && F.size) setTimeout(function(){ $('cout').scrollIntoView({ block: 'start' }); }, 50);
+  }
+  if (p.get('tab')) showTab(p.get('tab'));
+}
+applyHash();
+window.addEventListener('hashchange', applyHash);
+// 嵌在网页PPT里演示时，PageUp/PageDown 交给PPT翻页
+if (window.parent !== window) {
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'PageDown' || e.key === 'PageUp') { e.preventDefault(); try { window.parent.postMessage({ slideKey: e.key }, '*'); } catch(err){} }
+  });
+}
+})();
+</script>
+</body>
+</html>
