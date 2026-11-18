@@ -124,20 +124,26 @@
 
     /* 奖励标准 */
     var b21 = need('2.1');
-    var rewardTable = tables(b21.lines)[0];
     var typeKey = { '理工类（硬件类）': 'hw', '理工类（其他类）': 'sci', '人文社科类': 'hum' };
-    var student = {};
-    if (rewardTable) {
-      rewardTable.rows.forEach(function (r) {
+    function rewardTableOf(block, label) {
+      var t = tables(block.lines)[0], out = {};
+      if (t) t.rows.forEach(function (r) {
         var k = typeKey[stripMd(r[0])];
         if (!k) return;
         var v = r.slice(1, 7).map(num);
-        student[k] = { A: { 1: v[0], 2: v[1], 3: v[2] }, B: { 1: v[3], 2: v[4], 3: v[5] } };
+        out[k] = { A: { 1: v[0], 2: v[1], 3: v[2] }, B: { 1: v[3], 2: v[4], 3: v[5] } };
       });
+      ['hw', 'sci', 'hum'].forEach(function (k) {
+        if (!out[k]) errors.push(label + '缺少一行：' + Object.keys(typeKey).filter(function (n) { return typeKey[n] === k; })[0]);
+      });
+      return out;
     }
-    ['hw', 'sci', 'hum'].forEach(function (k) {
-      if (!student[k]) errors.push('2.1 学生奖励表缺少一行：' + Object.keys(typeKey).filter(function (n) { return typeKey[n] === k; })[0]);
-    });
+    var student = rewardTableOf(b21, '2.1 学生奖励表');
+    var b22 = need('2.2');
+    var teacher = rewardTableOf(b22, '2.2 指导教师奖励表');
+    var tsp = b22.lines.join('\n').match(/指导教师特等奖[\s\S]{0,40}?一等奖奖励基础\s*[×xX*]\s*([\d.]+)/);
+    var teacherSpecial = tsp ? +tsp[1] : null;
+    if (!tsp) errors.push('2.2 未找到指导教师特等奖系数（格式：指导教师特等奖…一等奖奖励基础×1.5）');
     var t21 = b21.lines.join('\n');
     var team = null;
     var tm = t21.match(/个人\s*([\d.]+)[；;，,\s]*2人\s*([\d.]+)[；;，,\s]*3人\s*([\d.]+)[；;，,\s]*4人及以上\s*([\d.]+)/);
@@ -300,7 +306,7 @@
     return {
       data: {
         meta: { title: fm.title || '', version: fm.version || '', updated: fm.updated || '', policy: fm.source_policy || '', generatedAt: new Date().toISOString().slice(0, 10) },
-        reward: { student: student, team: team, specialFactor: specialFactor },
+        reward: { student: student, team: team, specialFactor: specialFactor, teacher: teacher, teacherSpecial: teacherSpecial },
         competitions: comps, approvedCD: cd, hints: hints,
         calendar: { months: monthPlan, nodes: nodes },
         routes: routes, cases: cases, money: money, tips: tips, gradeRules: gradeRules
@@ -522,8 +528,8 @@
       out.status = 'VERIFY';
       out.verify.push('奖励专业类型：需学校确认该赛事按 理工类（硬件类）/ 理工类（其他类）/ 人文社科类 中的哪一类计奖');
       if (input.rank !== 'X') {
-        var vals = ['hw', 'sci', 'hum'].map(function (t) { return { t: t, v: baseOf(R, input.grade, t, input.rank) * coef }; });
-        out.range = vals.map(function (x) { return { type: TYPE_NAMES[x.t], amount: round2(x.v) }; });
+        var vals = ['hw', 'sci', 'hum'].map(function (t) { return { t: t, v: baseOf(R, input.grade, t, input.rank) * coef, tv: teacherOf(R, input.grade, t, input.rank) }; });
+        out.range = vals.map(function (x) { return { type: TYPE_NAMES[x.t], amount: round2(x.v), teacher: x.tv }; });
       }
     }
     if (out.status === 'VERIFY') return out;
@@ -535,7 +541,21 @@
     out.amount = round2(base * coef);
     out.formula = fmt(base) + ' 元 × ' + coef + ' = ' + fmt(out.amount) + ' 元';
     out.status = 'OK'; out.ok = true;
+    // 指导教师（团队）奖励：按获奖项目计，不乘学生团队系数
+    var t1 = R.teacher[input.type][input.grade][1], tAmt = teacherOf(R, input.grade, input.type, input.rank);
+    out.teacher = {
+      amount: tAmt,
+      lines: input.rank === 'S'
+        ? ['特等奖基础 = ' + input.grade + '类·' + TYPE_NAMES[input.type] + '·一等奖 ' + fmt(t1) + ' 元 × ' + R.teacherSpecial + ' = ' + fmt(tAmt) + ' 元']
+        : ['基础标准：' + input.grade + '类 · ' + TYPE_NAMES[input.type] + ' · ' + RANK_NAMES[input.rank] + ' = ' + fmt(tAmt) + ' 元', '不乘学生团队系数'],
+      formula: fmt(tAmt) + ' 元'
+    };
+    out.total = round2(out.amount + tAmt);
     return out;
+  }
+  function teacherOf(R, grade, type, rank) {
+    var t = R.teacher[type][grade];
+    return rank === 'S' ? round2(t[1] * R.teacherSpecial) : t[rank];
   }
   function baseOf(R, grade, type, rank) {
     var t = R.student[type][grade];

@@ -110,6 +110,19 @@ legend{font-family:var(--serif);font-weight:900;font-size:16px;margin-bottom:8px
 .amount small{font-size:20px;margin-left:4px}
 .formula{font-family:ui-monospace,Consolas,monospace;background:var(--soft);border:1px solid var(--line);padding:10px 12px;margin-top:14px;font-size:14px;overflow-wrap:anywhere}
 .reslabel{font-weight:700;color:var(--muted);letter-spacing:2px;font-size:13px}
+.viewseg{grid-template-columns:1fr 1fr}
+.viewseg span{min-height:40px;font-size:14px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+.who{border:1px solid var(--line);border-top:4px solid var(--navy);padding:14px;background:var(--card);min-width:0}
+.who.t{border-top-color:var(--gold)}
+.who .amount{font-size:38px}
+.who .formula{margin-top:10px}
+.sum{display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-top:1px solid var(--line);margin-top:14px;padding-top:10px;font-size:14px}
+.sum b{font-family:var(--serif);font-size:22px}
+.rangetbl{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+.rangetbl th,.rangetbl td{border-bottom:1px dashed var(--line);padding:6px 4px;text-align:right}
+.rangetbl th:first-child,.rangetbl td:first-child{text-align:left}
+@media (max-width:560px){.duo{grid-template-columns:1fr}}
 .money{display:grid;gap:8px;margin-top:8px}
 .money div{background:var(--soft);border-left:3px solid var(--line);padding:8px 12px;font-size:14px}
 .list .row{display:flex;gap:12px;align-items:flex-start;padding:11px 4px;border-top:1px solid var(--line);cursor:pointer}
@@ -155,8 +168,12 @@ footer{margin-top:28px;font-size:12px;color:var(--muted);border-top:1px solid va
   <!-- 计算 -->
   <section id="pane-c" role="tabpanel" class="hidden">
     <div class="card">
-      <h2>学生获奖奖励估算</h2>
+      <h2>获奖奖励估算</h2>
       <div class="small muted" id="calcFrom">依次确认 4 个条件，再显示公式和金额。</div>
+      <div class="seg viewseg" id="f-view" role="radiogroup" aria-label="查看对象" style="margin-top:14px">
+        <label><input type="radio" name="view" value="stu" checked><span>只看学生</span></label>
+        <label><input type="radio" name="view" value="both"><span>学生 + 指导教师</span></label>
+      </div>
       <form id="cform" style="margin-top:14px">
         <fieldset>
           <legend>① 赛事类别</legend>
@@ -366,7 +383,7 @@ function renderResult(res, ctx){
 }
 
 /* ---------- 计算 ---------- */
-var F = { grade: null, type: null, rank: null, size: null };
+var F = { grade: null, type: null, rank: null, size: null, view: 'stu' };
 var OPTS = {
   grade: [['A','A类'],['B','B类'],['C','C类'],['D','D类'],['UNCONFIRMED','待学校确认']],
   type: [['hw','理工类（硬件类）'],['sci','理工类（其他类）'],['hum','人文社科类'],['unsure','还不确定']],
@@ -379,6 +396,7 @@ Object.keys(OPTS).forEach(function(k){
   }).join('');
   $('f-' + k).addEventListener('change', function(e){ F[k] = e.target.value; renderCalc(); });
 });
+$('f-view').addEventListener('change', function(e){ F.view = e.target.value; renderCalc(); });
 function setField(k, v){
   F[k] = v == null ? null : String(v);
   document.querySelectorAll('input[name="' + k + '"]').forEach(function(i){ i.checked = i.value === F[k]; });
@@ -397,25 +415,38 @@ function calcFromResult(res){
 }
 
 function renderCalc(){
+  var both = F.view === 'both';
   var inp = { grade: F.grade, type: F.type, rank: F.rank === null ? null : (F.rank === 'S' || F.rank === 'X' ? F.rank : +F.rank), size: F.size === null ? null : +F.size };
   var r = C.calcReward(D, inp), h = '';
+  var verifyList = function(){ return '<div class="note"><b>需要核实的条件</b><ul class="src">' + r.verify.map(function(v){ return '<li>' + esc(v) + '</li>'; }).join('') + '</ul></div>'; };
   if (r.status === 'NO_STANDARD') {
     h = '<div class="reslabel">计算结果</div><div class="amount" style="color:var(--warn);font-size:26px;border-bottom-color:var(--warn)">' + esc(r.message) + '</div><p>' + esc(r.detail) + '</p>';
-    if (r.verify.length) h += '<div class="note"><b>需要核实的条件</b><ul class="src">' + r.verify.map(function(v){ return '<li>' + esc(v) + '</li>'; }).join('') + '</ul></div>';
+    if (both) h += '<p class="small muted">指导教师获奖奖励同样只规定了A、B类。C、D类给承办单位的是工作经费（如指导费），不属于获奖奖励。</p>';
+    if (r.verify.length) h += verifyList();
   } else if (r.status === 'MISSING') {
     h = '<div class="reslabel">还差 ' + r.missing.length + ' 个条件</div><p class="muted">请确认：' + r.missing.join('、') + '。</p>';
   } else if (r.status === 'VERIFY') {
-    h = '<div class="reslabel">' + esc(r.label) + '</div><div class="amount" style="color:var(--warn);font-size:26px;border-bottom-color:var(--warn)">先核实条件，再算金额</div>';
-    h += '<div class="note"><b>需要核实的条件</b><ul class="src">' + r.verify.map(function(v){ return '<li>' + esc(v) + '</li>'; }).join('') + '</ul></div>';
+    h = '<div class="reslabel">' + esc(r.label) + (both ? ' · 指导教师奖励' : '') + '</div><div class="amount" style="color:var(--warn);font-size:26px;border-bottom-color:var(--warn)">先核实条件，再算金额</div>';
+    h += verifyList();
     if (r.range) {
-      h += '<h3>核实后可能是（仅供参考，非学校最终认定）</h3>';
-      h += r.range.map(function(x){ return '<div class="node"><div style="flex:1">' + esc(x.type) + '</div><b>' + C.fmt(x.amount) + ' 元</b></div>'; }).join('');
+      h += '<h3>核实后可能是（仅供参考，非学校最终认定）</h3><table class="rangetbl"><tr><th>奖励专业类型</th><th>学生' + (+F.size > 1 ? '团队' : '') + '</th>' + (both ? '<th>指导教师</th>' : '') + '</tr>' +
+        r.range.map(function(x){ return '<tr><td>' + esc(x.type) + '</td><td><b>' + C.fmt(x.amount) + ' 元</b></td>' + (both ? '<td><b>' + C.fmt(x.teacher) + ' 元</b></td>' : '') + '</tr>'; }).join('') + '</table>';
     }
   } else if (r.status === 'OK') {
-    h = '<div class="reslabel">' + esc(r.label) + '</div><div class="amount" data-testid="amount">' + C.fmt(r.amount) + '<small>元</small></div>';
-    h += '<div class="formula">' + r.lines.map(esc).join('<br>') + '<br><b>' + esc(r.formula) + '</b></div>';
+    var stu = '<div class="reslabel">' + esc(r.label) + '</div><div class="amount" data-testid="amount">' + C.fmt(r.amount) + '<small>元</small></div>' +
+      '<div class="formula">' + r.lines.map(esc).join('<br>') + '<br><b>' + esc(r.formula) + '</b></div>';
+    if (!both) {
+      h = stu;
+    } else {
+      h = '<div class="duo"><div class="who">' + '<div class="small" style="font-weight:700;margin-bottom:4px">学生</div>' + stu + '</div>' +
+        '<div class="who t"><div class="small" style="font-weight:700;margin-bottom:4px">指导教师（团队）</div><div class="reslabel">预计指导教师奖励</div>' +
+        '<div class="amount" data-testid="teacher-amount">' + C.fmt(r.teacher.amount) + '<small>元</small></div>' +
+        '<div class="formula">' + r.teacher.lines.map(esc).join('<br>') + '<br><b>' + esc(r.teacher.formula) + '</b></div></div></div>' +
+        '<div class="sum"><span class="muted">两项合计（分别发放，不是同一笔钱）</span><b>' + C.fmt(r.total) + ' 元</b></div>' +
+        '<div class="note okbox">指导教师奖励发给指导教师（团队），按获奖项目计，<b>不乘学生团队系数</b>。同一竞赛项目中，第一指导教师原则上最多按获奖等级较高的前5人（队）计算。优秀指导教师、优秀组织奖和指导费另有规定，不在此估算内。</div>';
+    }
     h += '<div class="note okbox">';
-    if (+F.size > 1) h += '这是<b>整个团队</b>的奖励总额，不是每人金额；学校文件没有规定队内怎么分。<br>';
+    if (+F.size > 1) h += '学生部分是<b>整个团队</b>的奖励总额，不是每人金额；学校文件没有规定队内怎么分。<br>';
     h += '按 ' + esc(D.meta.policy) + ' 估算。获奖等次以主办方证书为准，同一作品按最高等次计、不重复；成绩公布并发文后，次月10日前到教务处办理。</div>';
   }
   $('cout').innerHTML = h;
@@ -450,7 +481,7 @@ function renderList(){
 renderList();
 renderCalc();
 
-/* ---------- 链接参数：#q=蓝桥杯 / #calc=A,sci,2,3 / #tab=b ---------- */
+/* ---------- 链接参数：#q=蓝桥杯 / #calc=A,sci,2,3[&view=both] / #tab=b ---------- */
 function applyHash(){
   var p = new URLSearchParams(location.hash.slice(1));
   if (p.get('demo') && !document.querySelector('.demo-banner')) document.querySelector('header.top').insertAdjacentHTML('beforeend', '<div class="demo-banner">课堂演示模式：可直接在这里输入和点击</div>');
@@ -458,6 +489,7 @@ function applyHash(){
   if (p.get('calc')) {
     var v = p.get('calc').split(',');
     setField('grade', v[0]); setField('type', v[1]); setField('rank', v[2]); setField('size', v[3]);
+    setField('view', p.get('view') === 'both' ? 'both' : 'stu');
     showTab('c'); renderCalc();
     if (F.grade && F.type && F.rank && F.size) setTimeout(function(){ $('cout').scrollIntoView({ block: 'start' }); }, 50);
   }

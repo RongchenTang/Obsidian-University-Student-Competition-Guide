@@ -54,6 +54,17 @@ td:first-child,th:first-child{white-space:nowrap}
 th{color:var(--ink);font-size:22px;font-weight:800;border-bottom:2px solid var(--line)}
 .big{font-size:72px;font-weight:900;color:var(--ok);width:fit-content;background:linear-gradient(transparent 60%,var(--hl) 60%,var(--hl) 92%,transparent 92%)}
 .foot{position:absolute;left:72px;right:72px;bottom:20px;display:flex;justify-content:space-between;font-size:17px;color:var(--muted)}
+.stairs{display:flex;align-items:flex-end;gap:10px;flex:1;padding-bottom:8px}
+.stp{flex:1;background:var(--soft);border:2px solid var(--line);border-radius:6px;box-shadow:6px 6px 0 var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.stp:nth-child(5){background:var(--green-soft);border-color:var(--green);box-shadow:6px 6px 0 var(--green)}
+.stp .g{font-size:30px;padding:2px 16px}
+.lv{font-size:19px;font-weight:800;color:var(--muted);letter-spacing:1px}
+.sn{font-size:25px;font-weight:800;line-height:1.35}
+.ss{font-size:17px;color:var(--muted);line-height:1.4}
+.arw{flex:none;align-self:center;font-size:20px;font-weight:800;color:var(--green);writing-mode:horizontal-tb}
+.branch{border-style:dashed;display:flex;flex-direction:column;gap:10px}
+.fork{display:flex;flex-direction:column;gap:10px;margin-top:6px;font-size:20px}
+.fork .g{font-size:20px;min-width:120px;text-align:center}
 /* 12个月总览 */
 .months{display:grid;grid-template-columns:repeat(6,1fr);gap:18px}
 .m{border:2px solid var(--line);border-radius:6px;background:var(--soft);padding:12px 14px;min-height:250px;font-size:19px;line-height:1.4;box-shadow:4px 4px 0 var(--shadow)}
@@ -150,21 +161,26 @@ S.push('<div class="kicker">重庆移通学院 · 学生学科竞赛导航</div>
   '<div class="row sm"><div class="col box"><b>今天讲 4 件事</b><br>① 学校怎么认定A/B/C/D类　② 奖金怎么算<br>③ 12个月竞赛日历　④ 按方向选赛 + 现场查询</div>' +
   '<div class="col box"><b>标签怎么看</b><br><span class="st st-已核实">已核实</span>有年份、事项类型和官方来源<br><span class="st st-备赛参考">备赛参考</span>往年规律，不是报名承诺<br><span class="st st-待公布">待公布</span>当届日期还没发布</div></div>');
 
-/* 2 ABCD */
-var EX = {
-  A: '全国大学生数学建模竞赛（全国赛）——附件1第5项',
-  B: '中国大学生计算机设计大赛<b>重庆市级赛</b>——附件2第42项，是A类赛事对应的市级赛',
-  C: '例如某个不在A/B名单里的省级比赛：只有拿到<b>学校批准记录</b>后才算C类，否则是「待学校确认」',
-  D: '例如某学院发起、多个部门参与的校级比赛：同样要<b>学校批准</b>才算D类'
-};
-S.push('<div class="kicker">第一件事</div><h2>学校怎么分 A / B / C / D 类？</h2>' +
-  '<div class="grow" style="display:grid;grid-template-columns:1fr 1fr;gap:18px">' +
-  D.gradeRules.map(function(g){
-    return '<div class="box" style="font-size:24px"><div style="font-size:30px;font-weight:800;margin-bottom:6px"><span class="g g-' + g.grade + '">' + g.grade + '类</span>' + esc(g.plain) + '</div>' +
-      '<div class="xs muted" style="margin-bottom:8px">名单：' + esc(g.list) + '</div>' +
-      '<div>举例：' + (EX[g.grade] || '') + '</div></div>';
-  }).join('') + '</div>' +
-  '<div class="sm muted" style="margin-top:14px">注意：A/B/C/D 是<b>竞赛等级</b>；「理工类（硬件类）/理工类（其他类）/人文社科类」是<b>计奖类型</b>，两件事要分开确认。</div>');
+/* 2 ABCD：用「数学建模」一条线串起来 */
+var A05 = byId.A05, B38 = byId.B38;
+function step(h, level, name, grade, gtext, src, note){
+  return '<div class="stp" style="height:' + h + 'px"><div class="lv">' + level + '</div><div class="sn">' + name + '</div>' +
+    '<div style="margin-top:auto"><span class="g g-' + grade + '">' + gtext + '</span></div><div class="ss">' + src + '</div>' + (note ? '<div class="ss" style="color:var(--warn)">' + note + '</div>' : '') + '</div>';
+}
+S.push('<div class="kicker">第一件事 · 一个例子看懂</div><h2>同样是「数学建模」，为什么类别不一样？</h2>' +
+  '<div class="row grow" style="align-items:stretch">' +
+  '<div class="col" style="flex:2.3;display:flex;flex-direction:column"><div class="stairs">' +
+  step(360, '① 校内选拔赛', '某学院发起、多个部门参与的数学建模校赛', 'D', 'D类', '假设：已经学校批准', '没有批准记录 → 待学校确认') +
+  '<div class="arw">晋级 →</div>' +
+  step(460, '② 重庆赛区', esc(compact(B38.name)) + '（重庆赛区）', 'B', 'B类', '附件2第' + B38.no + '项 · A类赛事对应的赛区赛') +
+  '<div class="arw">晋级 →</div>' +
+  step(560, '③ 全国赛', esc(A05.name), 'A', 'A类', '附件1第' + A05.no + '项 · 全国竞赛榜单') +
+  '</div></div>' +
+  '<div class="col" style="flex:1;display:flex;flex-direction:column;gap:16px">' +
+  '<div class="box branch"><div class="lv">换一个比赛呢？</div><div class="sn" style="font-size:24px">另一项数学建模比赛，<b>不在</b>A/B名单里（省级及以上）</div>' +
+  '<div class="fork"><div><span class="g g-C">C类</span>拿到学校批准</div><div><span class="g g-W">待学校确认</span>没有批准记录</div></div></div>' +
+  '<div class="box" style="font-size:23px;line-height:1.6;flex:1"><b style="font-size:26px">记住三句话</b><br>1. 先查名单：附件1是A，附件2是B<br>2. A类赛事的省赛、赛区赛，算B类<br>3. C、D类都要<b>学校批准</b>；学生奖金只有A、B有标准</div>' +
+  '</div></div>');
 
 /* 3 奖金 */
 var R = D.reward, TN = C.TYPE_NAMES;
@@ -177,7 +193,8 @@ S.push('<div class="kicker">第二件事</div><h2>获奖了，学校怎么奖励
   '</div><div class="col box" style="display:flex;flex-direction:column;justify-content:center">' +
   '<div class="sm muted">例：A类 · 理工类（其他类）· 二等奖 · 3人团队</div>' +
   '<div style="font-size:34px;margin:10px 0">' + C.fmt(R.student.sci.A[2]) + ' × ' + R.team[3] + ' =</div><div class="big">' + C.fmt(C.calcReward(D,{grade:'A',type:'sci',rank:2,size:3}).amount) + ' 元</div>' +
-  '<div class="sm" style="margin-top:10px">这是<b>预计团队奖励总额</b>，不是每人各拿这么多；学校没规定队内怎么分。</div></div></div>');
+  '<div class="sm" style="margin-top:10px">这是<b>预计团队奖励总额</b>，不是每人各拿这么多；学校没规定队内怎么分。</div>' +
+  '<div class="sm" style="margin-top:16px;border-top:2px dashed var(--rule);padding-top:14px">指导教师（团队）另按教师标准：<b style="font-size:30px">' + C.fmt(C.calcReward(D,{grade:'A',type:'sci',rank:2,size:3}).teacher.amount) + ' 元</b><br><span class="xs muted">不乘学生团队系数；与学生奖励分开发放</span></div></div></div>');
 
 /* 4 全年总览 */
 function monthNodes(m){ return D.calendar.nodes.filter(function(n){ return n.month === m; }); }
@@ -250,11 +267,12 @@ S.push('<div class="row" style="align-items:flex-end;margin-bottom:14px"><div st
   '<button class="btn ghost" data-demo="q=中国大学生计算机设计大赛重庆赛">查：计设重庆赛</button>' +
   '<button class="btn ghost" data-demo="q=数维杯">查：未收录赛事</button>' +
   '<button class="btn ghost" data-demo="calc=A,sci,2,3">算：A类理工其他二等奖3人</button>' +
+  '<button class="btn ghost" data-demo="calc=A,sci,2,3&view=both">算：学生+老师</button>' +
   '<a class="btn" href="' + QUERY + '" target="_blank" rel="noopener" style="text-decoration:none">新窗口打开</a></div></div>' +
   '<div class="row grow"><div style="width:470px;flex:none"><iframe id="demoFrame" title="查询器演示" src="about:blank"></iframe></div>' +
   '<div class="col box sm"><b>演示脚本</b><ol style="margin:8px 0 0;padding-left:28px;line-height:1.7">' +
   '<li>点「查：蓝桥杯」→ 先选赛道和层级，再看结果</li><li>点「查：计设重庆赛」→ 直接匹配到B类（附件2第42项）</li>' +
-  '<li>点「查：未收录赛事」→ 显示「待学校确认」，不会自动判C类</li><li>点「算：…3人」→ 预计团队奖励总额 2,400 元</li></ol>' +
+  '<li>点「查：未收录赛事」→ 显示「待学校确认」，不会自动判C类</li><li>点「算：…3人」→ 预计团队奖励总额 2,400 元</li><li>点「算：学生+老师」→ 学生 2,400 元与指导教师 5,000 元并排对比</li></ol>' +
   '<div class="xs muted" style="margin-top:14px">在左侧页面里操作时，键盘输入进入查询器；点一下左侧以外的区域，或按 PageUp / PageDown，即可继续翻页。<br>学生手机：把「手机单文件版」里的 HTML 发给学生，用手机浏览器打开即可。</div></div></div>');
 
 /* 15 结尾 */
