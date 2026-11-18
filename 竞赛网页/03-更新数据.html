@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>更新竞赛数据</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--ink:#1b1f27;--muted:#5d6675;--line:#e2e5ea;--soft:#eef1f5;--accent:#1f4fd1;--ok:#0b7a3b;--ok-soft:#e1f4e8;--bad:#b42318;--bad-soft:#fde8e6;--warn:#a15c00;--warn-soft:#fdf1dc}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#111418;--card:#1a1e24;--ink:#e8ebf0;--muted:#9aa3b2;--line:#2b313a;--soft:#222731;--accent:#7da2ff;--ok:#5ad08c;--ok-soft:#14321f;--bad:#ff8a80;--bad-soft:#3a1714;--warn:#f2b552;--warn-soft:#3a2c12}}
+:root[data-theme="dark"]{--bg:#111418;--card:#1a1e24;--ink:#e8ebf0;--muted:#9aa3b2;--line:#2b313a;--soft:#222731;--accent:#7da2ff;--ok:#5ad08c;--ok-soft:#14321f;--bad:#ff8a80;--bad-soft:#3a1714;--warn:#f2b552;--warn-soft:#3a2c12}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:820px;margin:0 auto;padding:24px 16px 60px}
+h1{font-size:26px;margin:0 0 4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:16px}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--soft)}
+.btn{border:0;background:var(--accent);color:#fff;border-radius:10px;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer;margin:6px 8px 0 0}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+.muted{color:var(--muted)}
+.msg{border-radius:10px;padding:10px 14px;margin-top:10px}
+.msg.ok{background:var(--ok-soft);color:var(--ok)}
+.msg.bad{background:var(--bad-soft);color:var(--bad)}
+.msg.warn{background:var(--warn-soft);color:var(--warn)}
+table{border-collapse:collapse;width:100%;margin-top:8px}
+td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+ol li{margin:4px 0}
+code{background:var(--soft);border-radius:4px;padding:1px 5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>更新竞赛数据</h1>
+  <div class="muted">修改资料库 Markdown 后，在这里重新生成查询器和网页PPT共用的数据。全程在本机浏览器里完成，不上传任何文件。</div>
+
+  <div class="card">
+    <b>① 选择修改后的 Markdown</b>
+    <div class="drop" id="drop" tabindex="0">把 <code>重庆移通学院_学科竞赛导航资料库_….md</code> 拖到这里，或点击选择文件
+      <input type="file" id="file" accept=".md,text/markdown,text/plain" hidden>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div class="card" id="summaryCard" hidden>
+    <b>② 检查结果（与当前网页数据对比）</b>
+    <table id="summary"></table>
+    <div id="issues"></div>
+  </div>
+
+  <div class="card" id="saveCard" hidden>
+    <b>③ 保存新数据</b>
+    <div id="dirWrap">
+      <p class="muted" style="margin:6px 0">推荐（Chrome / Edge）：直接写回「竞赛网页」文件夹，两个网页刷新后立即生效。</p>
+      <button class="btn" id="saveDir">选择「竞赛网页」文件夹并写入</button>
+    </div>
+    <p class="muted" style="margin:14px 0 6px">或者分别下载，再手动放回对应位置：</p>
+    <button class="btn ghost" id="dlData">下载 data.js → 放进 assets 文件夹替换</button>
+    <button class="btn ghost" id="dlPhone">下载 手机单文件版 → 放进「手机单文件版」文件夹替换</button>
+    <div id="saved"></div>
+  </div>
+
+  <div class="card muted">
+    <b style="color:var(--ink)">说明</b>
+    <ol>
+      <li>两个网页只读取 <code>assets/data.js</code>，这个文件完全由 Markdown 生成。</li>
+      <li>请只改 Markdown 表格里的内容，不要改表头和标题编号（如「## 四、」「### 10.4」）。</li>
+      <li>出现红色「错误」时不会生成数据；黄色「提醒」不影响生成，但建议核对。</li>
+      <li>保存后，刷新已打开的查询器和网页PPT即可看到新数据。</li>
+    </ol>
+  </div>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/core.js"></script>
+<script src="assets/page-template.js"></script>
+<script>
+(function(){
+'use strict';
+var C = window.CompCore, OLD = window.COMP_DATA, T = window.PAGE_TEMPLATE;
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+var out = null;
+
+var drop = $('drop'), file = $('file');
+drop.onclick = function(){ file.click(); };
+drop.onkeydown = function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); file.click(); } };
+drop.ondragover = function(e){ e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = function(){ drop.classList.remove('over'); };
+drop.ondrop = function(e){ e.preventDefault(); drop.classList.remove('over'); if (e.dataTransfer.files[0]) read(e.dataTransfer.files[0]); };
+file.onchange = function(){ if (file.files[0]) read(file.files[0]); };
+
+function read(f){
+  var r = new FileReader();
+  r.onload = function(){ handle(f.name, String(r.result)); };
+  r.readAsText(f, 'utf-8');
+}
+
+function count(d, g){ return d ? d.competitions.filter(function(c){ return c.grade === g; }).length : '—'; }
+function handle(name, md){
+  var res = C.parseMarkdown(md);
+  $('status').innerHTML = '<div class="msg ' + (res.errors.length ? 'bad' : 'ok') + '">已读取：' + esc(name) + (res.errors.length ? ' —— 有 ' + res.errors.length + ' 个错误，未生成数据' : ' —— 解析成功') + '</div>';
+  var d = res.data;
+  var rows = [
+    ['资料库版本', OLD ? OLD.meta.version : '—', d.meta.version],
+    ['更新日期', OLD ? OLD.meta.updated : '—', d.meta.updated],
+    ['A类条目', count(OLD,'A'), count(d,'A')],
+    ['B类条目（附件2）', count(OLD,'B'), count(d,'B')],
+    ['C/D 已批准记录', OLD ? OLD.approvedCD.length : '—', d.approvedCD.length],
+    ['日历节点', OLD ? OLD.calendar.nodes.length : '—', d.calendar.nodes.length],
+    ['方向路线', OLD ? OLD.routes.length : '—', d.routes.length],
+    ['课堂案例', OLD ? OLD.cases.length : '—', d.cases.length]
+  ];
+  $('summary').innerHTML = '<tr><th>项目</th><th class="n">当前网页</th><th class="n">新 Markdown</th></tr>' +
+    rows.map(function(r){ return '<tr><td>' + r[0] + '</td><td class="n">' + esc(r[1]) + '</td><td class="n"' + (String(r[1]) !== String(r[2]) ? ' style="font-weight:700;color:var(--accent)"' : '') + '>' + esc(r[2]) + '</td></tr>'; }).join('');
+  var iss = '';
+  res.errors.forEach(function(e){ iss += '<div class="msg bad">错误：' + esc(e) + '</div>'; });
+  res.warnings.forEach(function(w){ iss += '<div class="msg warn">提醒：' + esc(w) + '</div>'; });
+  if (!iss) iss = '<div class="msg ok">没有发现问题。</div>';
+  $('issues').innerHTML = iss;
+  $('summaryCard').hidden = false;
+  if (res.errors.length) { $('saveCard').hidden = true; out = null; return; }
+  var dataJs = C.makeDataJs(d);
+  var phone = null;
+  try { phone = T ? C.makeSingleFile(T.page, T.core, dataJs) : null; } catch(e){ phone = null; }
+  out = { dataJs: dataJs, phone: phone };
+  $('dlPhone').disabled = !phone;
+  $('dirWrap').hidden = !window.showDirectoryPicker;
+  $('saveCard').hidden = false;
+  $('saved').innerHTML = '';
+}
+
+function download(name, text){
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+  a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+$('dlData').onclick = function(){ if (out) download('data.js', out.dataJs); };
+$('dlPhone').onclick = function(){ if (out && out.phone) download('竞赛查询器-手机版.html', out.phone); };
+
+$('saveDir').onclick = async function(){
+  if (!out) return;
+  try {
+    var dir = await window.showDirectoryPicker({ mode: 'readwrite' });
+    var assets;
+    try { assets = await dir.getDirectoryHandle('assets'); }
+    catch(e){ throw new Error('所选文件夹里没有 assets 子文件夹，请选择「竞赛网页」文件夹本身'); }
+    await writeFile(assets, 'data.js', out.dataJs);
+    var done = ['assets/data.js'];
+    if (out.phone) {
+      var ph = await dir.getDirectoryHandle('手机单文件版', { create: true });
+      await writeFile(ph, '竞赛查询器-手机版.html', out.phone);
+      done.push('手机单文件版/竞赛查询器-手机版.html');
+    }
+    $('saved').innerHTML = '<div class="msg ok">已写入：' + done.join('、') + '。刷新查询器和网页PPT即可看到新数据。</div>';
+  } catch(e) {
+    if (e && e.name === 'AbortError') return;
+    $('saved').innerHTML = '<div class="msg bad">没有写入：' + esc(e.message || e) + '。可以改用下面的下载按钮。</div>';
+  }
+};
+async function writeFile(dirHandle, name, text){
+  var fh = await dirHandle.getFileHandle(name, { create: true });
+  var w = await fh.createWritable(); await w.write(text); await w.close();
+}
+})();
+</script>
+</body>
+</html>

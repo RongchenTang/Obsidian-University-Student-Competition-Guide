@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>学科竞赛导航</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--ink:#1b1f27;--muted:#5d6675;--line:#e2e5ea;--accent:#1f4fd1;--soft:#eef1f5}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#111418;--card:#1a1e24;--ink:#e8ebf0;--muted:#9aa3b2;--line:#2b313a;--accent:#7da2ff;--soft:#222731}}
+:root[data-theme="dark"]{--bg:#111418;--card:#1a1e24;--ink:#e8ebf0;--muted:#9aa3b2;--line:#2b313a;--accent:#7da2ff;--soft:#222731}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:32px 16px 60px}
+h1{font-size:28px;margin:0}
+.sub{color:var(--muted);margin-top:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:22px}
+a.card{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;transition:border-color .15s}
+a.card:hover,a.card:focus-visible{border-color:var(--accent);outline:none}
+.n{font-size:13px;font-weight:800;color:var(--accent)}
+.t{font-size:20px;font-weight:800;margin:4px 0}
+.d{color:var(--muted);font-size:14px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:18px;font-size:15px}
+code{background:var(--soft);border-radius:4px;padding:1px 5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>学科竞赛导航</h1>
+  <div class="sub" id="meta">重庆移通学院 · 依据《学生学科竞赛管理办法（修订）》</div>
+  <div class="grid">
+    <a class="card" href="01-竞赛查询与奖金计算器.html"><div class="n">01 · 学生用</div><div class="t">竞赛查询与奖金计算器</div><div class="d">查赛事属于A/B类还是待学校确认，估算学校获奖奖励。手机可用。</div></a>
+    <a class="card" href="02-竞赛日历网页PPT.html"><div class="n">02 · 课堂投影</div><div class="t">竞赛日历网页PPT</div><div class="d">12个月时间线、方向推荐、获奖案例和现场互动。← → 翻页，F 全屏。</div></a>
+    <a class="card" href="03-更新数据.html"><div class="n">03 · 老师维护</div><div class="t">更新数据</div><div class="d">修改资料库 Markdown 后，在这里重新生成两个网页的数据。</div></a>
+  </div>
+  <div class="box">
+    <b>发给学生手机：</b>把 <code>手机单文件版/竞赛查询器-手机版.html</code> 这一个文件通过微信/QQ发给学生，用手机浏览器打开即可（不需要其他文件）。<br>
+    <b>完整说明：</b>见同目录的 <code>打开与更新说明.md</code>（可在 Obsidian 中阅读）。
+  </div>
+</div>
+<script src="assets/data.js"></script>
+<script>
+if (window.COMP_DATA) document.getElementById('meta').textContent += ' · 资料库 v' + COMP_DATA.meta.version + '（' + COMP_DATA.meta.updated + '）';
+</script>
+</body>
+</html>
